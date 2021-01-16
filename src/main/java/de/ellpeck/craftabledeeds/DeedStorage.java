@@ -33,6 +33,18 @@ public class DeedStorage extends WorldSavedData {
         this.markDirty();
     }
 
+    public Claim getClaim(double x, double z) {
+        for (Claim claim : this.claims.values()) {
+            if (claim.isOnMap(x, z))
+                return claim;
+        }
+        return null;
+    }
+
+    public void update() {
+
+    }
+
     @Override
     public void read(CompoundNBT nbt) {
         this.claims.clear();
@@ -81,6 +93,16 @@ public class DeedStorage extends WorldSavedData {
 
         public MapData getData() {
             return this.world.getMapData(FilledMapItem.getMapName(this.mapId));
+        }
+
+        // MapData#updateDecorations
+        public boolean isOnMap(double worldX, double worldZ) {
+            MapData data = this.getData();
+            int i = 1 << data.scale;
+            // TODO the client doesn't know about xCenter and zCenter so we'll have to sync that ourselves
+            float mapX = (float) (worldX - data.xCenter) / i;
+            float mapZ = (float) (worldZ - data.zCenter) / i;
+            return mapX >= -64 && mapZ >= -64 && mapX <= 64 && mapZ <= 64;
         }
 
         @Override
