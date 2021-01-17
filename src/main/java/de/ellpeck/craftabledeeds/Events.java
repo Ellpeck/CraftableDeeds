@@ -1,12 +1,19 @@
 package de.ellpeck.craftabledeeds;
 
+import net.minecraft.entity.Entity;
+import net.minecraft.entity.item.HangingEntity;
+import net.minecraft.entity.item.ItemFrameEntity;
+import net.minecraft.entity.monster.CreeperEntity;
 import net.minecraft.entity.player.PlayerEntity;
+import net.minecraft.item.BlockItem;
 import net.minecraft.util.math.BlockPos;
 import net.minecraftforge.event.TickEvent;
+import net.minecraftforge.event.entity.EntityMobGriefingEvent;
 import net.minecraftforge.event.entity.player.AttackEntityEvent;
 import net.minecraftforge.event.entity.player.PlayerEvent;
 import net.minecraftforge.event.entity.player.PlayerInteractEvent;
 import net.minecraftforge.event.world.BlockEvent;
+import net.minecraftforge.eventbus.api.Event;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
 
@@ -43,14 +50,12 @@ public final class Events {
 
     @SubscribeEvent
     public static void onBlockInteract(PlayerInteractEvent.RightClickBlock event) {
-        if (shouldCancelInteraction(event.getPlayer(), event.getPos()))
-            event.setCanceled(true);
-    }
-
-    @SubscribeEvent
-    public static void onItemInteract(PlayerInteractEvent.RightClickItem event) {
-        if (shouldCancelInteraction(event.getPlayer(), event.getPos()))
-            event.setCanceled(true);
+        if (shouldCancelInteraction(event.getPlayer(), event.getPos())) {
+            event.setUseBlock(Event.Result.DENY);
+            // disallow placing blocks, but allow eating etc.
+            if (event.getItemStack().getItem() instanceof BlockItem)
+                event.setUseItem(Event.Result.DENY);
+        }
     }
 
     @SubscribeEvent
@@ -67,18 +72,32 @@ public final class Events {
 
     @SubscribeEvent
     public static void onEntityAttack(AttackEntityEvent event) {
-        // TODO item frame punching but not deleting
+        Entity target = event.getTarget();
+        if (target instanceof HangingEntity && shouldCancelInteraction(event.getPlayer(), target.getPosition())) {
+            // allow punching items out of item frames!
+            if (target instanceof ItemFrameEntity && !((ItemFrameEntity) target).getDisplayedItem().isEmpty())
+                return;
+            event.setCanceled(true);
+        }
     }
 
-    private static boolean shouldCancelInteraction(PlayerEntity player, BlockPos pos) {
+    @SubscribeEvent
+    public static void onMobGriefing(EntityMobGriefingEvent event) {
+        // creepers shouldn't explode
+        Entity entity = event.getEntity();
+        if (entity instanceof CreeperEntity && shouldCancelInteraction(entity, entity.getPosition()))
+            event.setResult(Event.Result.DENY);
+    }
+
+    private static boolean shouldCancelInteraction(Entity entity, BlockPos pos) {
         // y 15 and below should be ignored
         if (pos.getY() <= 15)
             return false;
         // opped players should be ignored
-        if (player.hasPermissionLevel(2))
+        if (entity.hasPermissionLevel(2))
             return false;
-        DeedStorage storage = DeedStorage.get(player.world);
+        DeedStorage storage = DeedStorage.get(entity.world);
         DeedStorage.Claim claim = storage.getClaim(pos.getX(), pos.getZ());
-        return claim != null && !claim.owner.equals(player.getUniqueID());
+        return claim != null && !claim.owner.equals(entity.getUniqueID());
     }
 }
