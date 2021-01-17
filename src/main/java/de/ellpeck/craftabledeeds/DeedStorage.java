@@ -1,9 +1,13 @@
 package de.ellpeck.craftabledeeds;
 
+import net.minecraft.entity.Entity;
+import net.minecraft.entity.item.ItemFrameEntity;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.item.FilledMapItem;
+import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.CompoundNBT;
 import net.minecraft.nbt.ListNBT;
+import net.minecraft.util.math.AxisAlignedBB;
 import net.minecraft.world.World;
 import net.minecraft.world.server.ServerWorld;
 import net.minecraft.world.storage.MapData;
@@ -34,22 +38,46 @@ public class DeedStorage extends WorldSavedData {
     }
 
     public void removeClaim(int id) {
-        if(this.claims.remove(id) != null){
+        if (this.claims.remove(id) != null) {
             PacketHandler.sendDeedsToEveryone(this.world);
             this.markDirty();
         }
     }
 
-    public Claim getClaim(double x, double z) {
+    public Claim getClaim(double x, double y, double z) {
         for (Claim claim : this.claims.values()) {
-            if (claim.isOnMap(x, z))
+            if (claim.getArea().contains(x, y, z))
                 return claim;
         }
         return null;
     }
 
     public void update() {
+        if (this.world.isRemote || this.world.getGameTime() % 100 != 0)
+            return;
+        // update the frame status of claims
+        for (Claim claim : this.claims.values()) {
+            if (claim.itemFrame >= 0) {
+                // check if the existing frame still contains our deed and skip if it does
+                Entity existing = this.world.getEntityByID(claim.itemFrame);
+                if (existing instanceof ItemFrameEntity) {
+                    ItemStack stack = ((ItemFrameEntity) existing).getDisplayedItem();
+                    if (stack.getItem() == CraftableDeeds.FILLED_DEED.get() && FilledMapItem.getMapId(stack) == claim.mapId) {
+                        continue;
+                    }
+                }
+                claim.itemFrame = -1;
+            }
 
+            // if not, check if there is any frame
+            for (ItemFrameEntity frame : this.world.getEntitiesWithinAABB(ItemFrameEntity.class, claim.getArea())) {
+                ItemStack stack = frame.getDisplayedItem();
+                if (stack.getItem() == CraftableDeeds.FILLED_DEED.get() && FilledMapItem.getMapId(stack) == claim.mapId) {
+                    claim.itemFrame = frame.getEntityId();
+                    break;
+                }
+            }
+        }
     }
 
     @Override
@@ -89,6 +117,7 @@ public class DeedStorage extends WorldSavedData {
         public int xCenter;
         public int zCenter;
         public int scale;
+        public int itemFrame = -1;
 
         public Claim(World world, int mapId, UUID owner) {
             MapData data = world.getMapData(FilledMapItem.getMapName(mapId));
@@ -105,12 +134,12 @@ public class DeedStorage extends WorldSavedData {
             this.deserializeNBT(nbt);
         }
 
-        // MapData#updateDecorations
-        public boolean isOnMap(double worldX, double worldZ) {
+        public AxisAlignedBB getArea() {
             int i = 1 << this.scale;
-            float mapX = (float) (worldX - this.xCenter) / i;
-            float mapZ = (float) (worldZ - this.zCenter) / i;
-            return mapX >= -64 && mapZ >= -64 && mapX <= 64 && mapZ <= 64;
+            return new AxisAlignedBB(
+                    // start at y 15
+                    this.xCenter - 64 * i, 15, this.zCenter - 64 * i,
+                    this.xCenter + 64 * i, this.world.getHeight(), this.zCenter + 64 * i);
         }
 
         @Override
@@ -121,6 +150,7 @@ public class DeedStorage extends WorldSavedData {
             nbt.putInt("xCenter", this.xCenter);
             nbt.putInt("zCenter", this.zCenter);
             nbt.putInt("scale", this.scale);
+            nbt.putInt("frame", this.itemFrame);
             return nbt;
         }
 
@@ -131,6 +161,7 @@ public class DeedStorage extends WorldSavedData {
             this.xCenter = nbt.getInt("xCenter");
             this.zCenter = nbt.getInt("zCenter");
             this.scale = nbt.getInt("scale");
+            this.itemFrame = nbt.getInt("frame");
         }
 
         @Override

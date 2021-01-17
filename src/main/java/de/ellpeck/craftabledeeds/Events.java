@@ -90,14 +90,11 @@ public final class Events {
     }
 
     private static boolean shouldCancelInteraction(Entity entity, BlockPos pos) {
-        // y 15 and below should be ignored
-        if (pos.getY() <= 15)
-            return false;
         // opped players should be ignored
         if (entity.hasPermissionLevel(2))
             return false;
         DeedStorage storage = DeedStorage.get(entity.world);
-        DeedStorage.Claim claim = storage.getClaim(pos.getX(), pos.getZ());
-        return claim != null && !claim.owner.equals(entity.getUniqueID());
+        DeedStorage.Claim claim = storage.getClaim(pos.getX(), pos.getY(), pos.getZ());
+        return claim != null && claim.itemFrame >= 0 && !claim.owner.equals(entity.getUniqueID());
     }
 }
