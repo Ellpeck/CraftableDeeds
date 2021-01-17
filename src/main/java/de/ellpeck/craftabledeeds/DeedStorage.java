@@ -29,8 +29,15 @@ public class DeedStorage extends WorldSavedData {
 
     public void addClaim(int id, PlayerEntity owner) {
         this.claims.put(id, new Claim(this.world, id, owner.getUniqueID()));
-        PacketHandler.sendDeedsToEveryone(owner.world);
+        PacketHandler.sendDeedsToEveryone(this.world);
         this.markDirty();
+    }
+
+    public void removeClaim(int id) {
+        if(this.claims.remove(id) != null){
+            PacketHandler.sendDeedsToEveryone(this.world);
+            this.markDirty();
+        }
     }
 
     public Claim getClaim(double x, double z) {
