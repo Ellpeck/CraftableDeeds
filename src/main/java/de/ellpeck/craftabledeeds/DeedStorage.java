@@ -66,7 +66,7 @@ public class DeedStorage extends WorldSavedData {
 
     public static DeedStorage get(World world) {
         if (world.isRemote) {
-            if (clientStorage == null)
+            if (clientStorage == null || clientStorage.world != world)
                 clientStorage = new DeedStorage(world);
             return clientStorage;
         } else {
@@ -79,11 +79,18 @@ public class DeedStorage extends WorldSavedData {
         private final World world;
         public int mapId;
         public UUID owner;
+        public int xCenter;
+        public int zCenter;
+        public int scale;
 
         public Claim(World world, int mapId, UUID owner) {
+            MapData data = world.getMapData(FilledMapItem.getMapName(mapId));
             this.world = world;
             this.mapId = mapId;
             this.owner = owner;
+            this.xCenter = data.xCenter;
+            this.zCenter = data.zCenter;
+            this.scale = data.scale;
         }
 
         public Claim(World world, CompoundNBT nbt) {
@@ -91,17 +98,11 @@ public class DeedStorage extends WorldSavedData {
             this.deserializeNBT(nbt);
         }
 
-        public MapData getData() {
-            return this.world.getMapData(FilledMapItem.getMapName(this.mapId));
-        }
-
         // MapData#updateDecorations
         public boolean isOnMap(double worldX, double worldZ) {
-            MapData data = this.getData();
-            int i = 1 << data.scale;
-            // TODO the client doesn't know about xCenter and zCenter so we'll have to sync that ourselves
-            float mapX = (float) (worldX - data.xCenter) / i;
-            float mapZ = (float) (worldZ - data.zCenter) / i;
+            int i = 1 << this.scale;
+            float mapX = (float) (worldX - this.xCenter) / i;
+            float mapZ = (float) (worldZ - this.zCenter) / i;
             return mapX >= -64 && mapZ >= -64 && mapX <= 64 && mapZ <= 64;
         }
 
@@ -110,6 +111,9 @@ public class DeedStorage extends WorldSavedData {
             CompoundNBT nbt = new CompoundNBT();
             nbt.putInt("id", this.mapId);
             nbt.putUniqueId("owner", this.owner);
+            nbt.putInt("xCenter", this.xCenter);
+            nbt.putInt("zCenter", this.zCenter);
+            nbt.putInt("scale", this.scale);
             return nbt;
         }
 
@@ -117,11 +121,14 @@ public class DeedStorage extends WorldSavedData {
         public void deserializeNBT(CompoundNBT nbt) {
             this.mapId = nbt.getInt("id");
             this.owner = nbt.getUniqueId("owner");
+            this.xCenter = nbt.getInt("xCenter");
+            this.zCenter = nbt.getInt("zCenter");
+            this.scale = nbt.getInt("scale");
         }
 
         @Override
         public String toString() {
-            return "Claim{world=" + this.world + ", mapId=" + this.mapId + ", owner=" + this.owner + '}';
+            return "Claim{" + "world=" + this.world + ", mapId=" + this.mapId + ", owner=" + this.owner + ", xCenter=" + this.xCenter + ", zCenter=" + this.zCenter + ", scale=" + this.scale + '}';
         }
     }
 }

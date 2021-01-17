@@ -79,7 +79,6 @@ public final class Events {
             return false;
         DeedStorage storage = DeedStorage.get(player.world);
         DeedStorage.Claim claim = storage.getClaim(pos.getX(), pos.getZ());
-        System.out.println(claim + " " + (claim == null ? "none" : claim.owner) + " " + player.getUniqueID());
         return claim != null && !claim.owner.equals(player.getUniqueID());
     }
 }
