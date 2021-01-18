@@ -21,6 +21,12 @@ public class EmptyDeedItem extends Item {
     @Override
     public ActionResult<ItemStack> onItemRightClick(World worldIn, PlayerEntity playerIn, Hand handIn) {
         ItemStack held = playerIn.getHeldItem(handIn);
+
+        // if there is already a claim here, don't let us overwrite it
+        DeedStorage.Claim existing = DeedStorage.get(worldIn).getClaim(playerIn.getPosX(), 64, playerIn.getPosZ());
+        if (existing != null)
+            return ActionResult.resultFail(held);
+
         if (!playerIn.abilities.isCreativeMode)
             held.shrink(1);
 

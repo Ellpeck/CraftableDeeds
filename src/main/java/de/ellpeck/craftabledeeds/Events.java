@@ -5,7 +5,6 @@ import net.minecraft.entity.item.HangingEntity;
 import net.minecraft.entity.item.ItemFrameEntity;
 import net.minecraft.entity.monster.CreeperEntity;
 import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.item.BlockItem;
 import net.minecraft.util.math.BlockPos;
 import net.minecraftforge.event.TickEvent;
 import net.minecraftforge.event.entity.EntityMobGriefingEvent;
@@ -44,7 +43,7 @@ public final class Events {
 
     @SubscribeEvent
     public static void onBlockPlace(BlockEvent.EntityPlaceEvent event) {
-        if (event.getEntity() instanceof PlayerEntity && shouldCancelInteraction((PlayerEntity) event.getEntity(), event.getPos()))
+        if (event.getEntity() instanceof PlayerEntity && shouldCancelInteraction(event.getEntity(), event.getPos()))
             event.setCanceled(true);
     }
 
@@ -52,9 +51,7 @@ public final class Events {
     public static void onBlockInteract(PlayerInteractEvent.RightClickBlock event) {
         if (shouldCancelInteraction(event.getPlayer(), event.getPos())) {
             event.setUseBlock(Event.Result.DENY);
-            // disallow placing blocks, but allow eating etc.
-            if (event.getItemStack().getItem() instanceof BlockItem)
-                event.setUseItem(Event.Result.DENY);
+            event.setUseItem(Event.Result.DENY);
         }
     }
 

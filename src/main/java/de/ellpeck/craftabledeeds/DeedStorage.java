@@ -67,6 +67,7 @@ public class DeedStorage extends WorldSavedData {
                     }
                 }
                 claim.itemFrame = -1;
+                PacketHandler.sendDeedsToEveryone(this.world);
             }
 
             // if not, check if there is any frame
@@ -74,6 +75,7 @@ public class DeedStorage extends WorldSavedData {
                 ItemStack stack = frame.getDisplayedItem();
                 if (stack.getItem() == CraftableDeeds.FILLED_DEED.get() && FilledMapItem.getMapId(stack) == claim.mapId) {
                     claim.itemFrame = frame.getEntityId();
+                    PacketHandler.sendDeedsToEveryone(this.world);
                     break;
                 }
             }
