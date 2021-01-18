@@ -6,7 +6,9 @@ import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.item.FilledMapItem;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.CompoundNBT;
+import net.minecraft.nbt.INBT;
 import net.minecraft.nbt.ListNBT;
+import net.minecraft.nbt.LongArrayNBT;
 import net.minecraft.util.math.AxisAlignedBB;
 import net.minecraft.world.World;
 import net.minecraft.world.server.ServerWorld;
@@ -15,9 +17,7 @@ import net.minecraft.world.storage.WorldSavedData;
 import net.minecraftforge.common.util.Constants;
 import net.minecraftforge.common.util.INBTSerializable;
 
-import java.util.HashMap;
-import java.util.Map;
-import java.util.UUID;
+import java.util.*;
 
 public class DeedStorage extends WorldSavedData {
     private static final String NAME = CraftableDeeds.ID + ":deed_storage";
@@ -33,15 +33,12 @@ public class DeedStorage extends WorldSavedData {
 
     public void addClaim(int id, PlayerEntity owner) {
         this.claims.put(id, new Claim(this.world, id, owner.getUniqueID()));
-        PacketHandler.sendDeedsToEveryone(this.world);
-        this.markDirty();
+        this.markDirtyAndSend();
     }
 
     public void removeClaim(int id) {
-        if (this.claims.remove(id) != null) {
-            PacketHandler.sendDeedsToEveryone(this.world);
-            this.markDirty();
-        }
+        if (this.claims.remove(id) != null)
+            this.markDirtyAndSend();
     }
 
     public Claim getClaim(double x, double y, double z) {
@@ -50,6 +47,10 @@ public class DeedStorage extends WorldSavedData {
                 return claim;
         }
         return null;
+    }
+
+    public Claim getClaim(int id) {
+        return this.claims.get(id);
     }
 
     public void update() {
@@ -67,7 +68,7 @@ public class DeedStorage extends WorldSavedData {
                     }
                 }
                 claim.itemFrame = -1;
-                PacketHandler.sendDeedsToEveryone(this.world);
+                this.markDirtyAndSend();
             }
 
             // if not, check if there is any frame
@@ -75,11 +76,16 @@ public class DeedStorage extends WorldSavedData {
                 ItemStack stack = frame.getDisplayedItem();
                 if (stack.getItem() == CraftableDeeds.FILLED_DEED.get() && FilledMapItem.getMapId(stack) == claim.mapId) {
                     claim.itemFrame = frame.getEntityId();
-                    PacketHandler.sendDeedsToEveryone(this.world);
+                    this.markDirtyAndSend();
                     break;
                 }
             }
         }
+    }
+
+    public void markDirtyAndSend() {
+        PacketHandler.sendDeedsToEveryone(this.world);
+        this.markDirty();
     }
 
     @Override
@@ -114,6 +120,7 @@ public class DeedStorage extends WorldSavedData {
     public static class Claim implements INBTSerializable<CompoundNBT> {
 
         private final World world;
+        public final List<UUID> friends = new ArrayList<>();
         public int mapId;
         public UUID owner;
         public int xCenter;
@@ -153,6 +160,10 @@ public class DeedStorage extends WorldSavedData {
             nbt.putInt("zCenter", this.zCenter);
             nbt.putInt("scale", this.scale);
             nbt.putInt("frame", this.itemFrame);
+            ListNBT friends = new ListNBT();
+            for (UUID friend : this.friends)
+                friends.add(new LongArrayNBT(new long[]{friend.getMostSignificantBits(), friend.getLeastSignificantBits()}));
+            nbt.put("friends", friends);
             return nbt;
         }
 
@@ -164,11 +175,26 @@ public class DeedStorage extends WorldSavedData {
             this.zCenter = nbt.getInt("zCenter");
             this.scale = nbt.getInt("scale");
             this.itemFrame = nbt.getInt("frame");
+            this.friends.clear();
+            ListNBT friends = nbt.getList("friends", Constants.NBT.TAG_LONG_ARRAY);
+            for (INBT val : friends) {
+                long[] friend = ((LongArrayNBT) val).getAsLongArray();
+                this.friends.add(new UUID(friend[0], friend[1]));
+            }
         }
 
         @Override
         public String toString() {
-            return "Claim{" + "world=" + this.world + ", mapId=" + this.mapId + ", owner=" + this.owner + ", xCenter=" + this.xCenter + ", zCenter=" + this.zCenter + ", scale=" + this.scale + '}';
+            return "Claim{" +
+                    "world=" + this.world +
+                    ", friends=" + this.friends +
+                    ", mapId=" + this.mapId +
+                    ", owner=" + this.owner +
+                    ", xCenter=" + this.xCenter +
+                    ", zCenter=" + this.zCenter +
+                    ", scale=" + this.scale +
+                    ", itemFrame=" + this.itemFrame +
+                    '}';
         }
     }
 }

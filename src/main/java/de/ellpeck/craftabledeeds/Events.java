@@ -93,6 +93,6 @@ public final class Events {
             return false;
         DeedStorage storage = DeedStorage.get(entity.world);
         DeedStorage.Claim claim = storage.getClaim(pos.getX(), pos.getY(), pos.getZ());
-        return claim != null && claim.itemFrame >= 0 && !claim.owner.equals(entity.getUniqueID());
+        return claim != null && claim.itemFrame >= 0 && !claim.owner.equals(entity.getUniqueID()) && !claim.friends.contains(entity.getUniqueID());
     }
 }
