@@ -51,7 +51,8 @@ public final class Events {
     @SubscribeEvent
     public static void onBlockInteract(PlayerInteractEvent.RightClickBlock event) {
         if (shouldCancelInteraction(event.getPlayer(), event.getPos())) {
-            event.setUseBlock(Event.Result.DENY);
+            if (!CraftableDeeds.allowOpeningBlocks.get())
+                event.setUseBlock(Event.Result.DENY);
             event.setUseItem(Event.Result.DENY);
         }
     }
@@ -93,6 +94,6 @@ public final class Events {
             return false;
         DeedStorage storage = DeedStorage.get(entity.world);
         DeedStorage.Claim claim = storage.getClaim(pos.getX(), pos.getY(), pos.getZ());
-        return claim != null && claim.itemFrame >= 0 && !claim.owner.equals(entity.getUniqueID()) && !claim.friends.contains(entity.getUniqueID());
+        return claim != null && (!CraftableDeeds.requireItemFrames.get() || claim.itemFrame >= 0) && !claim.owner.equals(entity.getUniqueID()) && !claim.friends.contains(entity.getUniqueID());
     }
 }
