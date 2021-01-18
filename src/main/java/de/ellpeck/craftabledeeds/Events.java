@@ -4,6 +4,7 @@ import net.minecraft.entity.Entity;
 import net.minecraft.entity.item.HangingEntity;
 import net.minecraft.entity.item.ItemFrameEntity;
 import net.minecraft.entity.monster.CreeperEntity;
+import net.minecraft.entity.monster.EndermanEntity;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.util.math.BlockPos;
 import net.minecraftforge.event.TickEvent;
@@ -82,7 +83,7 @@ public final class Events {
     public static void onMobGriefing(EntityMobGriefingEvent event) {
         // creepers shouldn't explode
         Entity entity = event.getEntity();
-        if (entity instanceof CreeperEntity && shouldCancelInteraction(entity, entity.getPosition()))
+        if ((entity instanceof CreeperEntity || entity instanceof EndermanEntity) && shouldCancelInteraction(entity, entity.getPosition()))
             event.setResult(Event.Result.DENY);
     }
 
