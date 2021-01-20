@@ -34,7 +34,8 @@ public class EmptyDeedItem extends Item {
         createMapData(filled, playerIn, MathHelper.floor(playerIn.getPosX()), MathHelper.floor(playerIn.getPosZ()), (byte) 0, true, false);
 
         playerIn.addStat(Stats.ITEM_USED.get(this));
-        playerIn.playSound(SoundEvents.UI_CARTOGRAPHY_TABLE_TAKE_RESULT, 1.0F, 1.0F);
+        playerIn.playSound(SoundEvents.UI_CARTOGRAPHY_TABLE_TAKE_RESULT, 1, 1);
+        playerIn.playSound(SoundEvents.ENTITY_PLAYER_LEVELUP, 1, 1);
 
         if (held.isEmpty()) {
             return ActionResult.func_233538_a_(filled, worldIn.isRemote());
