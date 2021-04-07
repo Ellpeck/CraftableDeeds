@@ -23,6 +23,7 @@ import java.util.List;
 import java.util.UUID;
 
 public class FilledDeedItem extends FilledMapItem {
+
     public FilledDeedItem() {
         super(new Properties().maxStackSize(1));
     }
@@ -30,10 +31,14 @@ public class FilledDeedItem extends FilledMapItem {
     @Override
     public ActionResultType onItemUse(ItemUseContext context) {
         BlockState state = context.getWorld().getBlockState(context.getPos());
+        // delet the deed when using a grindstone
         if (state.getBlock() == Blocks.GRINDSTONE) {
-            // delet the deed when using a grindstone
-            DeedStorage.get(context.getWorld()).removeClaim(FilledMapItem.getMapId(context.getItem()));
-            context.getPlayer().setHeldItem(context.getHand(), new ItemStack(CraftableDeeds.EMPTY_DEED.get()));
+            if (!context.getWorld().isRemote) {
+                DeedStorage storage = DeedStorage.get(context.getWorld());
+                storage.removeClaim(FilledMapItem.getMapId(context.getItem()));
+                context.getPlayer().setHeldItem(context.getHand(), new ItemStack(CraftableDeeds.EMPTY_DEED.get()));
+                storage.markDirtyAndSend();
+            }
             return ActionResultType.SUCCESS;
         }
         return super.onItemUse(context);
@@ -46,14 +51,17 @@ public class FilledDeedItem extends FilledMapItem {
             DeedStorage.Claim claim = storage.getClaim(getMapId(stack));
             if (claim == null)
                 return ActionResultType.FAIL;
-            if (claim.friends.contains(target.getUniqueID())) {
-                claim.friends.remove(target.getUniqueID());
-                playerIn.sendStatusMessage(new TranslationTextComponent("info." + CraftableDeeds.ID + ".removed_friend", target.getDisplayName()), true);
-            } else {
-                claim.friends.add(target.getUniqueID());
-                playerIn.sendStatusMessage(new TranslationTextComponent("info." + CraftableDeeds.ID + ".added_friend", target.getDisplayName()), true);
+            if (!playerIn.world.isRemote) {
+                if (claim.friends.contains(target.getUniqueID())) {
+                    claim.friends.remove(target.getUniqueID());
+                    playerIn.sendStatusMessage(new TranslationTextComponent("info." + CraftableDeeds.ID + ".removed_friend", target.getDisplayName()), true);
+                } else {
+                    claim.friends.add(target.getUniqueID());
+                    playerIn.sendStatusMessage(new TranslationTextComponent("info." + CraftableDeeds.ID + ".added_friend", target.getDisplayName()), true);
+                }
+                storage.markDirtyAndSend();
             }
-            storage.markDirtyAndSend();
+            return ActionResultType.SUCCESS;
         }
         return ActionResultType.PASS;
     }
