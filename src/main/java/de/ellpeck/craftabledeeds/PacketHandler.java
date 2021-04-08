@@ -7,6 +7,7 @@ import net.minecraft.nbt.CompoundNBT;
 import net.minecraft.network.PacketBuffer;
 import net.minecraft.util.ResourceLocation;
 import net.minecraft.world.World;
+import net.minecraftforge.fml.event.lifecycle.FMLCommonSetupEvent;
 import net.minecraftforge.fml.network.NetworkEvent;
 import net.minecraftforge.fml.network.NetworkRegistry;
 import net.minecraftforge.fml.network.PacketDistributor;
@@ -18,7 +19,7 @@ public final class PacketHandler {
 
     private static SimpleChannel network;
 
-    public static void init() {
+    public static void init(FMLCommonSetupEvent event) {
         String version = "1";
         network = NetworkRegistry.newSimpleChannel(new ResourceLocation(CraftableDeeds.ID, "network"), () -> version, version::equals, version::equals);
         network.registerMessage(0, PacketDeeds.class, PacketDeeds::toBytes, PacketDeeds::fromBytes, PacketDeeds::onMessage);

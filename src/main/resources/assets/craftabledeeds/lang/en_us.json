@@ -1,4 +1,5 @@
 {
+    "block.craftabledeeds.deed_pedestal": "Deed Pedestal",
     "item.craftabledeeds.empty_deed": "Empty Deed",
     "item.craftabledeeds.filled_deed": "Deed",
     "info.craftabledeeds.added_friend": "Added %s to this deed",
