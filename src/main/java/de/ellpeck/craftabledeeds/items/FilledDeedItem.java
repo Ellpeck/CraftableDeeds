@@ -1,5 +1,7 @@
-package de.ellpeck.craftabledeeds;
+package de.ellpeck.craftabledeeds.items;
 
+import de.ellpeck.craftabledeeds.CraftableDeeds;
+import de.ellpeck.craftabledeeds.DeedStorage;
 import net.minecraft.block.BlockState;
 import net.minecraft.block.Blocks;
 import net.minecraft.client.util.ITooltipFlag;

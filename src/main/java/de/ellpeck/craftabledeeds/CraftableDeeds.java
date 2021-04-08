@@ -1,5 +1,7 @@
 package de.ellpeck.craftabledeeds;
 
+import de.ellpeck.craftabledeeds.items.EmptyDeedItem;
+import de.ellpeck.craftabledeeds.items.FilledDeedItem;
 import net.minecraft.item.Item;
 import net.minecraftforge.common.ForgeConfigSpec;
 import net.minecraftforge.eventbus.api.IEventBus;

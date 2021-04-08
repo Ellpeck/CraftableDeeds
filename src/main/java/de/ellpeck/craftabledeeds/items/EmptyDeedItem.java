@@ -1,5 +1,7 @@
-package de.ellpeck.craftabledeeds;
+package de.ellpeck.craftabledeeds.items;
 
+import de.ellpeck.craftabledeeds.CraftableDeeds;
+import de.ellpeck.craftabledeeds.DeedStorage;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.item.FilledMapItem;
 import net.minecraft.item.Item;

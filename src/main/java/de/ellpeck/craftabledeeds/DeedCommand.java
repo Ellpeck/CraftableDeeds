@@ -1,6 +1,7 @@
 package de.ellpeck.craftabledeeds;
 
 import com.mojang.brigadier.CommandDispatcher;
+import de.ellpeck.craftabledeeds.items.EmptyDeedItem;
 import net.minecraft.command.CommandSource;
 import net.minecraft.command.Commands;
 import net.minecraft.entity.player.PlayerEntity;
