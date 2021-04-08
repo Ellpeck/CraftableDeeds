@@ -29,6 +29,11 @@ public class FilledDeedItem extends FilledMapItem {
     }
 
     @Override
+    public boolean hasEffect(ItemStack stack) {
+        return true;
+    }
+
+    @Override
     public ActionResultType onItemUse(ItemUseContext context) {
         BlockState state = context.getWorld().getBlockState(context.getPos());
         // delet the deed when using a grindstone

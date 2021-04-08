@@ -14,8 +14,14 @@ import net.minecraft.world.World;
 import net.minecraft.world.storage.MapData;
 
 public class EmptyDeedItem extends Item {
+
     public EmptyDeedItem() {
         super(new Properties().maxStackSize(1).group(ItemGroup.MISC));
+    }
+
+    @Override
+    public boolean hasEffect(ItemStack stack) {
+        return true;
     }
 
     @Override
