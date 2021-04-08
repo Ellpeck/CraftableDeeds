@@ -10,6 +10,7 @@ import net.minecraft.util.ActionResult;
 import net.minecraft.util.Hand;
 import net.minecraft.util.SoundEvents;
 import net.minecraft.util.math.MathHelper;
+import net.minecraft.util.text.TranslationTextComponent;
 import net.minecraft.world.World;
 import net.minecraft.world.storage.MapData;
 
@@ -30,8 +31,13 @@ public class EmptyDeedItem extends Item {
 
         // if there is already a claim here, don't let us overwrite it
         DeedStorage.Claim existing = DeedStorage.get(worldIn).getClaim(playerIn.getPosX(), 64, playerIn.getPosZ());
-        if (existing != null)
+        if (existing != null) {
+            if (!worldIn.isRemote) {
+                PlayerEntity owner = worldIn.getPlayerByUuid(existing.owner);
+                playerIn.sendStatusMessage(new TranslationTextComponent("info." + CraftableDeeds.ID + ".already_claimed", owner != null ? owner.getDisplayName() : existing.owner), true);
+            }
             return ActionResult.resultFail(held);
+        }
 
         if (!playerIn.abilities.isCreativeMode)
             held.shrink(1);

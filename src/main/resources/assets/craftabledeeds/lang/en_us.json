@@ -4,5 +4,6 @@
     "info.craftabledeeds.added_friend": "Added %s to this deed",
     "info.craftabledeeds.removed_friend": "Removed %s from this deed",
     "info.craftabledeeds.owner": "Owner: %s",
-    "info.craftabledeeds.friends": "Friends:"
+    "info.craftabledeeds.friends": "Friends:",
+    "info.craftabledeeds.already_claimed": "This area is already claimed by %s"
 }
