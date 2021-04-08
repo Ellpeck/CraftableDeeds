@@ -5,6 +5,7 @@ import net.minecraft.entity.item.HangingEntity;
 import net.minecraft.entity.item.ItemFrameEntity;
 import net.minecraft.entity.monster.CreeperEntity;
 import net.minecraft.entity.monster.EndermanEntity;
+import net.minecraft.entity.monster.ZombieEntity;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.util.math.BlockPos;
 import net.minecraftforge.event.RegisterCommandsEvent;
@@ -84,10 +85,12 @@ public final class Events {
 
     @SubscribeEvent
     public static void onMobGriefing(EntityMobGriefingEvent event) {
-        // creepers shouldn't explode
         Entity entity = event.getEntity();
-        if ((entity instanceof CreeperEntity || entity instanceof EndermanEntity) && shouldCancelInteraction(entity, entity.getPosition()))
-            event.setResult(Event.Result.DENY);
+        // creeper explosions, endermen picking stuff up and zombies breaking down doors should be disallowed
+        if (entity instanceof CreeperEntity || entity instanceof EndermanEntity || entity instanceof ZombieEntity) {
+            if (shouldCancelInteraction(entity, entity.getPosition()))
+                event.setResult(Event.Result.DENY);
+        }
     }
 
     @SubscribeEvent
