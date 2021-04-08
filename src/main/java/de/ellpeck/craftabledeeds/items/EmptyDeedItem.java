@@ -16,6 +16,8 @@ import net.minecraft.util.text.TranslationTextComponent;
 import net.minecraft.world.World;
 import net.minecraft.world.storage.MapData;
 
+import java.util.List;
+
 public class EmptyDeedItem extends Item {
 
     public EmptyDeedItem() {
@@ -30,6 +32,12 @@ public class EmptyDeedItem extends Item {
     @Override
     public ActionResult<ItemStack> onItemRightClick(World worldIn, PlayerEntity playerIn, Hand handIn) {
         ItemStack held = playerIn.getHeldItem(handIn);
+
+        List<? extends String> dims = CraftableDeeds.allowedDimensions.get();
+        if (!dims.isEmpty() && !dims.contains(worldIn.getDimensionKey().getLocation().toString())) {
+            playerIn.sendStatusMessage(new TranslationTextComponent("info." + CraftableDeeds.ID + ".disallowed_dimension"), true);
+            return ActionResult.resultFail(held);
+        }
 
         // if there is already a claim here, don't let us overwrite it
         DeedStorage.Claim existing = DeedStorage.get(worldIn).getClaim(playerIn.getPosX(), 64, playerIn.getPosZ());
