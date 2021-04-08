@@ -34,7 +34,7 @@ public class EmptyDeedItem extends Item {
         ItemStack held = playerIn.getHeldItem(handIn);
 
         List<? extends String> dims = CraftableDeeds.allowedDimensions.get();
-        if (!dims.isEmpty() && !dims.contains(worldIn.getDimensionKey().getLocation().toString())) {
+        if (!dims.contains("*") && !dims.contains(worldIn.getDimensionKey().getLocation().toString())) {
             playerIn.sendStatusMessage(new TranslationTextComponent("info." + CraftableDeeds.ID + ".disallowed_dimension"), true);
             return ActionResult.resultFail(held);
         }

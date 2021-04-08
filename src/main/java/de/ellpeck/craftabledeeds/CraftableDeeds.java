@@ -39,7 +39,7 @@ public class CraftableDeeds {
         ForgeConfigSpec.Builder builder = new ForgeConfigSpec.Builder();
         requireItemFrames = builder.comment("Whether the deed needs to be in an item frame inside the claimed area for the claim to be valid").define("requireItemFrames", true);
         allowOpeningBlocks = builder.comment("Whether opening blocks (like furnaces and chests) is allowed inside other players' claims").define("allowOpeningBlocks", false);
-        allowedDimensions = builder.comment("The dimension ids of dimensions that using claims is allowed in").defineList("allowedDimensions", Arrays.asList("minecraft:overworld", "minecraft:the_nether", "minecraft:the_end"), o -> true);
+        allowedDimensions = builder.comment("The dimension ids of dimensions that using claims is allowed in. To allow all dimensions, add an entry \"*\"").defineList("allowedDimensions", Arrays.asList("minecraft:overworld", "minecraft:the_nether", "minecraft:the_end"), o -> true);
         ModLoadingContext.get().registerConfig(Type.COMMON, builder.build());
     }
 
