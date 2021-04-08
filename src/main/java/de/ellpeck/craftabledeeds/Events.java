@@ -7,6 +7,7 @@ import net.minecraft.entity.monster.CreeperEntity;
 import net.minecraft.entity.monster.EndermanEntity;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.util.math.BlockPos;
+import net.minecraftforge.event.RegisterCommandsEvent;
 import net.minecraftforge.event.TickEvent;
 import net.minecraftforge.event.entity.EntityMobGriefingEvent;
 import net.minecraftforge.event.entity.player.AttackEntityEvent;
@@ -16,6 +17,7 @@ import net.minecraftforge.event.world.BlockEvent;
 import net.minecraftforge.eventbus.api.Event;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
+import net.minecraftforge.fml.event.server.FMLServerStartingEvent;
 
 @Mod.EventBusSubscriber
 public final class Events {
@@ -86,6 +88,11 @@ public final class Events {
         Entity entity = event.getEntity();
         if ((entity instanceof CreeperEntity || entity instanceof EndermanEntity) && shouldCancelInteraction(entity, entity.getPosition()))
             event.setResult(Event.Result.DENY);
+    }
+
+    @SubscribeEvent
+    public static void onServerStarting(RegisterCommandsEvent event) {
+        DeedCommand.register(event.getDispatcher());
     }
 
     private static boolean shouldCancelInteraction(Entity entity, BlockPos pos) {

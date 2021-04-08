@@ -20,6 +20,7 @@ import net.minecraftforge.common.util.INBTSerializable;
 import java.util.*;
 
 public class DeedStorage extends WorldSavedData {
+
     private static final String NAME = CraftableDeeds.ID + ":deed_storage";
     private static DeedStorage clientStorage;
 
@@ -149,6 +150,11 @@ public class DeedStorage extends WorldSavedData {
                     // start at y 15
                     this.xCenter - 64 * i, 15, this.zCenter - 64 * i,
                     this.xCenter + 64 * i, this.world.getHeight(), this.zCenter + 64 * i);
+        }
+
+        public Object getOwnerName() {
+            PlayerEntity owner = this.world.getPlayerByUuid(this.owner);
+            return owner != null ? owner.getDisplayName() : this.owner;
         }
 
         @Override

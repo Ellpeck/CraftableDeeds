@@ -33,8 +33,7 @@ public class EmptyDeedItem extends Item {
         DeedStorage.Claim existing = DeedStorage.get(worldIn).getClaim(playerIn.getPosX(), 64, playerIn.getPosZ());
         if (existing != null) {
             if (!worldIn.isRemote) {
-                PlayerEntity owner = worldIn.getPlayerByUuid(existing.owner);
-                playerIn.sendStatusMessage(new TranslationTextComponent("info." + CraftableDeeds.ID + ".already_claimed", owner != null ? owner.getDisplayName() : existing.owner), true);
+                playerIn.sendStatusMessage(new TranslationTextComponent("info." + CraftableDeeds.ID + ".already_claimed", existing.getOwnerName()), true);
             }
             return ActionResult.resultFail(held);
         }
@@ -43,7 +42,7 @@ public class EmptyDeedItem extends Item {
             held.shrink(1);
 
         ItemStack filled = new ItemStack(CraftableDeeds.FILLED_DEED.get());
-        createMapData(filled, playerIn, MathHelper.floor(playerIn.getPosX()), MathHelper.floor(playerIn.getPosZ()), (byte) 0, true, false);
+        createMapData(filled, playerIn, MathHelper.floor(playerIn.getPosX()), MathHelper.floor(playerIn.getPosZ()), 0, true, false);
 
         playerIn.addStat(Stats.ITEM_USED.get(this));
         playerIn.playSound(SoundEvents.UI_CARTOGRAPHY_TABLE_TAKE_RESULT, 1, 1);
@@ -65,7 +64,8 @@ public class EmptyDeedItem extends Item {
         player.world.registerMapData(ret);
         if (!player.world.isRemote)
             DeedStorage.get(player.world).addClaim(id, player);
-        stack.getOrCreateTag().putInt("map", id);
+        if (!stack.isEmpty())
+            stack.getOrCreateTag().putInt("map", id);
         return ret;
     }
 }

@@ -5,5 +5,9 @@
     "info.craftabledeeds.removed_friend": "Removed %s from this deed",
     "info.craftabledeeds.owner": "Owner: %s",
     "info.craftabledeeds.friends": "Friends:",
-    "info.craftabledeeds.already_claimed": "This area is already claimed by %s"
+    "info.craftabledeeds.already_claimed": "This area is already claimed by %s",
+    "info.craftabledeeds.not_claimed": "This area is not claimed",
+    "info.craftabledeeds.claimed": "This area is claimed by %s",
+    "info.craftabledeeds.claim_added": "The area has been claimed successfully",
+    "info.craftabledeeds.claim_removed": "The area has been unclaimed successfully"
 }

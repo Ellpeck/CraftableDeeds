@@ -39,10 +39,8 @@ public class FilledDeedItem extends FilledMapItem {
         // delet the deed when using a grindstone
         if (state.getBlock() == Blocks.GRINDSTONE) {
             if (!context.getWorld().isRemote) {
-                DeedStorage storage = DeedStorage.get(context.getWorld());
-                storage.removeClaim(FilledMapItem.getMapId(context.getItem()));
+                DeedStorage.get(context.getWorld()).removeClaim(FilledMapItem.getMapId(context.getItem()));
                 context.getPlayer().setHeldItem(context.getHand(), new ItemStack(CraftableDeeds.EMPTY_DEED.get()));
-                storage.markDirtyAndSend();
             }
             return ActionResultType.SUCCESS;
         }
@@ -78,8 +76,7 @@ public class FilledDeedItem extends FilledMapItem {
         DeedStorage.Claim claim = DeedStorage.get(worldIn).getClaim(getMapId(stack));
         if (claim == null)
             return;
-        PlayerEntity owner = worldIn.getPlayerByUuid(claim.owner);
-        tooltip.add(new TranslationTextComponent("info." + CraftableDeeds.ID + ".owner", owner == null ? claim.owner : owner.getDisplayName()));
+        tooltip.add(new TranslationTextComponent("info." + CraftableDeeds.ID + ".owner", claim.getOwnerName()));
         if (!claim.friends.isEmpty()) {
             tooltip.add(new TranslationTextComponent("info." + CraftableDeeds.ID + ".friends"));
             for (UUID id : claim.friends) {
