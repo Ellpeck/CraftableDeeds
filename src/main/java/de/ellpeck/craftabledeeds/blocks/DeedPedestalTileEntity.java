@@ -4,18 +4,27 @@ import de.ellpeck.craftabledeeds.CraftableDeeds;
 import de.ellpeck.craftabledeeds.DeedStorage;
 import de.ellpeck.craftabledeeds.items.FilledDeedItem;
 import net.minecraft.block.BlockState;
+import net.minecraft.entity.player.PlayerEntity;
+import net.minecraft.entity.player.ServerPlayerEntity;
+import net.minecraft.item.FilledMapItem;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.CompoundNBT;
+import net.minecraft.network.IPacket;
 import net.minecraft.network.NetworkManager;
 import net.minecraft.network.play.server.SUpdateTileEntityPacket;
+import net.minecraft.tileentity.ITickableTileEntity;
 import net.minecraft.tileentity.TileEntity;
+import net.minecraft.util.math.ChunkPos;
+import net.minecraft.world.chunk.Chunk;
+import net.minecraft.world.server.ServerChunkProvider;
+import net.minecraft.world.server.ServerWorld;
 import net.minecraft.world.storage.MapData;
 import net.minecraftforge.items.ItemStackHandler;
 
 import javax.annotation.Nullable;
+import java.util.stream.Stream;
 
-// TODO figure out a way to send the map data to the client since it doesn't do it on its own yet
-public class DeedPedestalTileEntity extends TileEntity {
+public class DeedPedestalTileEntity extends TileEntity implements ITickableTileEntity {
 
     public final ItemStackHandler items = new ItemStackHandler(1);
 
@@ -28,6 +37,24 @@ public class DeedPedestalTileEntity extends TileEntity {
         if (stack.getItem() == CraftableDeeds.FILLED_DEED.get())
             return FilledDeedItem.getData(stack, this.world);
         return null;
+    }
+
+    @Override
+    public void tick() {
+        // send map data every 10 ticks similarly to how TrackedEntity does for item frames
+        if (!this.world.isRemote && this.world.getGameTime() % 10 == 0) {
+            MapData data = this.getMapData();
+            if (data != null) {
+                ItemStack stack = this.items.getStackInSlot(0);
+                ((ServerChunkProvider) this.world.getChunkProvider()).chunkManager
+                        .getTrackingPlayers(new ChunkPos(this.pos), false)
+                        .forEach(p -> {
+                            IPacket<?> ipacket = data.getMapInfo(p).getPacket(stack);
+                            if (ipacket != null)
+                                p.connection.sendPacket(ipacket);
+                        });
+            }
+        }
     }
 
     @Override
