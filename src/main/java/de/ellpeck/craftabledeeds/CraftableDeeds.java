@@ -46,7 +46,7 @@ public class CraftableDeeds {
     public static final RegistryObject<Item> DEED_PEDESTAL_ITEM = ITEMS.register("deed_pedestal", () -> new BlockItem(DEED_PEDESTAL_BLOCK.get(), new Item.Properties().group(ItemGroup.DECORATIONS)));
     public static final RegistryObject<TileEntityType<DeedPedestalTileEntity>> DEED_PEDESTAL_TILE = TILES.register("deed_pedestal", () -> TileEntityType.Builder.create(DeedPedestalTileEntity::new, DEED_PEDESTAL_BLOCK.get()).build(null));
 
-    public static ForgeConfigSpec.ConfigValue<Boolean> requireItemFrames;
+    public static ForgeConfigSpec.ConfigValue<Boolean> requirePedestals;
     public static ForgeConfigSpec.ConfigValue<Boolean> allowOpeningBlocks;
     public static ForgeConfigSpec.ConfigValue<List<? extends String>> allowedDimensions;
 
@@ -59,7 +59,7 @@ public class CraftableDeeds {
         TILES.register(bus);
 
         ForgeConfigSpec.Builder builder = new ForgeConfigSpec.Builder();
-        requireItemFrames = builder.comment("Whether the deed needs to be in an item frame inside the claimed area for the claim to be valid").define("requireItemFrames", true);
+        requirePedestals = builder.comment("Whether the deed needs to be in a deed pedestal inside the claimed area for the claim to be valid").define("requirePedestals", true);
         allowOpeningBlocks = builder.comment("Whether opening blocks (like furnaces and chests) is allowed inside other players' claims").define("allowOpeningBlocks", false);
         allowedDimensions = builder.comment("The dimension ids of dimensions that using claims is allowed in. To allow all dimensions, add an entry \"*\"").defineList("allowedDimensions", Arrays.asList("minecraft:overworld", "minecraft:the_nether", "minecraft:the_end"), o -> true);
         ModLoadingContext.get().registerConfig(Type.COMMON, builder.build());

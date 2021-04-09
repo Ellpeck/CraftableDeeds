@@ -18,7 +18,6 @@ import net.minecraftforge.event.world.BlockEvent;
 import net.minecraftforge.eventbus.api.Event;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
-import net.minecraftforge.fml.event.server.FMLServerStartingEvent;
 
 @Mod.EventBusSubscriber
 public final class Events {
@@ -104,6 +103,6 @@ public final class Events {
             return false;
         DeedStorage storage = DeedStorage.get(entity.world);
         DeedStorage.Claim claim = storage.getClaim(pos.getX(), pos.getY(), pos.getZ());
-        return claim != null && (!CraftableDeeds.requireItemFrames.get() || claim.itemFrame >= 0) && !claim.owner.equals(entity.getUniqueID()) && !claim.friends.contains(entity.getUniqueID());
+        return claim != null && (!CraftableDeeds.requirePedestals.get() || claim.pedestal != null) && !claim.owner.equals(entity.getUniqueID()) && !claim.friends.contains(entity.getUniqueID());
     }
 }

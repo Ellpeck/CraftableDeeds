@@ -21,8 +21,7 @@ public class DeedPedestalRenderer extends TileEntityRenderer<DeedPedestalTileEnt
 
     @Override
     public void render(DeedPedestalTileEntity tile, float partialTicks, MatrixStack matrixStackIn, IRenderTypeBuffer bufferIn, int combinedLightIn, int combinedOverlayIn) {
-        ItemStack stack = tile.items.getStackInSlot(0);
-        MapData mapdata = FilledMapItem.getMapData(stack, tile.getWorld());
+        MapData mapdata = tile.getMapData();
         if (mapdata != null) {
             PlayerEntity player = Minecraft.getInstance().player;
             double d0 = player.getPosX() - (tile.getPos().getX() + 0.5);

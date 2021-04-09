@@ -1,6 +1,7 @@
 package de.ellpeck.craftabledeeds.blocks;
 
 import de.ellpeck.craftabledeeds.CraftableDeeds;
+import de.ellpeck.craftabledeeds.PacketHandler;
 import net.minecraft.block.BlockRenderType;
 import net.minecraft.block.BlockState;
 import net.minecraft.block.Blocks;
@@ -42,14 +43,20 @@ public class DeedPedestalBlock extends ContainerBlock {
         ItemStack hand = player.getHeldItem(handIn);
         if (pedestal.isEmpty()) {
             if (hand.getItem() == CraftableDeeds.FILLED_DEED.get()) {
-                items.setStackInSlot(0, hand);
-                player.setHeldItem(handIn, ItemStack.EMPTY);
+                if (!worldIn.isRemote) {
+                    items.setStackInSlot(0, hand);
+                    player.setHeldItem(handIn, ItemStack.EMPTY);
+                    PacketHandler.sendTileEntityToClients(tile);
+                }
                 return ActionResultType.SUCCESS;
             }
         } else {
-            if (!player.addItemStackToInventory(pedestal))
-                worldIn.addEntity(new ItemEntity(worldIn, pos.getX() + 0.5F, pos.getY() + 1, pos.getZ() + 0.5F, pedestal));
-            pedestal.setCount(0);
+            if (!worldIn.isRemote) {
+                if (!player.addItemStackToInventory(pedestal))
+                    worldIn.addEntity(new ItemEntity(worldIn, pos.getX() + 0.5F, pos.getY() + 1, pos.getZ() + 0.5F, pedestal));
+                pedestal.setCount(0);
+                PacketHandler.sendTileEntityToClients(tile);
+            }
             return ActionResultType.SUCCESS;
         }
         return ActionResultType.FAIL;

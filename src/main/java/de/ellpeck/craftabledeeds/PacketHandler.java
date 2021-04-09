@@ -5,8 +5,12 @@ import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.entity.player.ServerPlayerEntity;
 import net.minecraft.nbt.CompoundNBT;
 import net.minecraft.network.PacketBuffer;
+import net.minecraft.network.play.server.SUpdateTileEntityPacket;
+import net.minecraft.tileentity.TileEntity;
 import net.minecraft.util.ResourceLocation;
+import net.minecraft.util.math.ChunkPos;
 import net.minecraft.world.World;
+import net.minecraft.world.server.ServerWorld;
 import net.minecraftforge.fml.event.lifecycle.FMLCommonSetupEvent;
 import net.minecraftforge.fml.network.NetworkEvent;
 import net.minecraftforge.fml.network.NetworkRegistry;
@@ -14,6 +18,7 @@ import net.minecraftforge.fml.network.PacketDistributor;
 import net.minecraftforge.fml.network.simple.SimpleChannel;
 
 import java.util.function.Supplier;
+import java.util.stream.Stream;
 
 public final class PacketHandler {
 
@@ -33,6 +38,13 @@ public final class PacketHandler {
     public static void sendDeedsToEveryone(World world) {
         PacketDeeds packet = new PacketDeeds(DeedStorage.get(world).write(new CompoundNBT()));
         network.send(PacketDistributor.DIMENSION.with(world::getDimensionKey), packet);
+    }
+
+    public static void sendTileEntityToClients(TileEntity tile) {
+        ServerWorld world = (ServerWorld) tile.getWorld();
+        Stream<ServerPlayerEntity> entities = world.getChunkProvider().chunkManager.getTrackingPlayers(new ChunkPos(tile.getPos()), false);
+        SUpdateTileEntityPacket packet = new SUpdateTileEntityPacket(tile.getPos(), -1, tile.write(new CompoundNBT()));
+        entities.forEach(e -> e.connection.sendPacket(packet));
     }
 
     private static class PacketDeeds {

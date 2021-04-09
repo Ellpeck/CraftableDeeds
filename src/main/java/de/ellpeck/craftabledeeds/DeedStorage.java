@@ -1,7 +1,6 @@
 package de.ellpeck.craftabledeeds;
 
-import net.minecraft.entity.Entity;
-import net.minecraft.entity.item.ItemFrameEntity;
+import de.ellpeck.craftabledeeds.blocks.DeedPedestalTileEntity;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.item.FilledMapItem;
 import net.minecraft.item.ItemStack;
@@ -9,7 +8,9 @@ import net.minecraft.nbt.CompoundNBT;
 import net.minecraft.nbt.INBT;
 import net.minecraft.nbt.ListNBT;
 import net.minecraft.nbt.LongArrayNBT;
+import net.minecraft.tileentity.TileEntity;
 import net.minecraft.util.math.AxisAlignedBB;
+import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.World;
 import net.minecraft.world.server.ServerWorld;
 import net.minecraft.world.storage.MapData;
@@ -24,6 +25,7 @@ public class DeedStorage extends WorldSavedData {
     private static final String NAME = CraftableDeeds.ID + ":deed_storage";
     private static DeedStorage clientStorage;
 
+    public Map<BlockPos, DeedPedestalTileEntity> pedestals = new HashMap<>();
     private final World world;
     private final Map<Integer, Claim> claims = new HashMap<>();
 
@@ -55,30 +57,33 @@ public class DeedStorage extends WorldSavedData {
     }
 
     public void update() {
-        if (this.world.isRemote || this.world.getGameTime() % 100 != 0)
+        if (this.world.isRemote || this.world.getGameTime() % 40 != 0)
             return;
-        // update the frame status of claims
+        // update the pedestal status of claims
         for (Claim claim : this.claims.values()) {
-            if (claim.itemFrame >= 0) {
-                // check if the existing frame still contains our deed and skip if it does
-                Entity existing = this.world.getEntityByID(claim.itemFrame);
-                if (existing instanceof ItemFrameEntity) {
-                    ItemStack stack = ((ItemFrameEntity) existing).getDisplayedItem();
-                    if (stack.getItem() == CraftableDeeds.FILLED_DEED.get() && FilledMapItem.getMapId(stack) == claim.mapId) {
+            if (claim.pedestal != null) {
+                // check if the existing pedestal still contains our deed and skip if it does
+                DeedPedestalTileEntity existing = this.pedestals.get(claim.pedestal);
+                if (existing != null) {
+                    ItemStack stack = existing.items.getStackInSlot(0);
+                    if (stack.getItem() == CraftableDeeds.FILLED_DEED.get() && FilledMapItem.getMapId(stack) == claim.mapId)
                         continue;
-                    }
                 }
-                claim.itemFrame = -1;
+                claim.pedestal = null;
                 this.markDirtyAndSend();
             }
 
-            // if not, check if there is any frame
-            for (ItemFrameEntity frame : this.world.getEntitiesWithinAABB(ItemFrameEntity.class, claim.getArea())) {
-                ItemStack stack = frame.getDisplayedItem();
-                if (stack.getItem() == CraftableDeeds.FILLED_DEED.get() && FilledMapItem.getMapId(stack) == claim.mapId) {
-                    claim.itemFrame = frame.getEntityId();
-                    this.markDirtyAndSend();
-                    break;
+            // if it doesn't still contain our deed, check if there is any new pedestal
+            AxisAlignedBB area = claim.getArea();
+            for (DeedPedestalTileEntity tile : this.pedestals.values()) {
+                BlockPos pos = tile.getPos();
+                if (area.contains(pos.getX(), pos.getY(), pos.getZ())) {
+                    ItemStack stack = tile.items.getStackInSlot(0);
+                    if (stack.getItem() == CraftableDeeds.FILLED_DEED.get() && FilledMapItem.getMapId(stack) == claim.mapId) {
+                        claim.pedestal = pos;
+                        this.markDirtyAndSend();
+                        break;
+                    }
                 }
             }
         }
@@ -127,7 +132,7 @@ public class DeedStorage extends WorldSavedData {
         public int xCenter;
         public int zCenter;
         public int scale;
-        public int itemFrame = -1;
+        public BlockPos pedestal;
 
         public Claim(World world, int mapId, UUID owner) {
             MapData data = world.getMapData(FilledMapItem.getMapName(mapId));
@@ -165,7 +170,8 @@ public class DeedStorage extends WorldSavedData {
             nbt.putInt("xCenter", this.xCenter);
             nbt.putInt("zCenter", this.zCenter);
             nbt.putInt("scale", this.scale);
-            nbt.putInt("frame", this.itemFrame);
+            if (this.pedestal != null)
+                nbt.putLong("pedestal", this.pedestal.toLong());
             ListNBT friends = new ListNBT();
             for (UUID friend : this.friends)
                 friends.add(new LongArrayNBT(new long[]{friend.getMostSignificantBits(), friend.getLeastSignificantBits()}));
@@ -180,7 +186,7 @@ public class DeedStorage extends WorldSavedData {
             this.xCenter = nbt.getInt("xCenter");
             this.zCenter = nbt.getInt("zCenter");
             this.scale = nbt.getInt("scale");
-            this.itemFrame = nbt.getInt("frame");
+            this.pedestal = nbt.contains("pedestal") ? BlockPos.fromLong(nbt.getLong("pedestal")) : null;
             this.friends.clear();
             ListNBT friends = nbt.getList("friends", Constants.NBT.TAG_LONG_ARRAY);
             for (INBT val : friends) {
@@ -199,7 +205,7 @@ public class DeedStorage extends WorldSavedData {
                     ", xCenter=" + this.xCenter +
                     ", zCenter=" + this.zCenter +
                     ", scale=" + this.scale +
-                    ", itemFrame=" + this.itemFrame +
+                    ", pedestal=" + this.pedestal +
                     '}';
         }
     }
