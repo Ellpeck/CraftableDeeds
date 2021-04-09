@@ -1,20 +1,27 @@
 package de.ellpeck.craftabledeeds;
 
 import de.ellpeck.craftabledeeds.blocks.DeedPedestalBlock;
+import de.ellpeck.craftabledeeds.blocks.DeedPedestalRenderer;
 import de.ellpeck.craftabledeeds.blocks.DeedPedestalTileEntity;
 import de.ellpeck.craftabledeeds.items.EmptyDeedItem;
 import de.ellpeck.craftabledeeds.items.FilledDeedItem;
 import net.minecraft.block.Block;
+import net.minecraft.client.renderer.RenderType;
+import net.minecraft.client.renderer.RenderTypeLookup;
 import net.minecraft.item.BlockItem;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemGroup;
 import net.minecraft.tileentity.TileEntityType;
+import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.common.ForgeConfigSpec;
 import net.minecraftforge.eventbus.api.IEventBus;
+import net.minecraftforge.fml.DistExecutor;
 import net.minecraftforge.fml.ModLoadingContext;
 import net.minecraftforge.fml.RegistryObject;
+import net.minecraftforge.fml.client.registry.ClientRegistry;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.config.ModConfig.Type;
+import net.minecraftforge.fml.event.lifecycle.FMLClientSetupEvent;
 import net.minecraftforge.fml.event.lifecycle.FMLCommonSetupEvent;
 import net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext;
 import net.minecraftforge.registries.DeferredRegister;
@@ -46,6 +53,7 @@ public class CraftableDeeds {
     public CraftableDeeds() {
         IEventBus bus = FMLJavaModLoadingContext.get().getModEventBus();
         bus.addListener(PacketHandler::init);
+        bus.addListener(Client::init);
         ITEMS.register(bus);
         BLOCKS.register(bus);
         TILES.register(bus);
@@ -55,5 +63,13 @@ public class CraftableDeeds {
         allowOpeningBlocks = builder.comment("Whether opening blocks (like furnaces and chests) is allowed inside other players' claims").define("allowOpeningBlocks", false);
         allowedDimensions = builder.comment("The dimension ids of dimensions that using claims is allowed in. To allow all dimensions, add an entry \"*\"").defineList("allowedDimensions", Arrays.asList("minecraft:overworld", "minecraft:the_nether", "minecraft:the_end"), o -> true);
         ModLoadingContext.get().registerConfig(Type.COMMON, builder.build());
+    }
+
+    private static class Client {
+
+        private static void init(FMLClientSetupEvent event) {
+            RenderTypeLookup.setRenderLayer(DEED_PEDESTAL_BLOCK.get(), RenderType.getCutout());
+            ClientRegistry.bindTileEntityRenderer(DEED_PEDESTAL_TILE.get(), DeedPedestalRenderer::new);
+        }
     }
 }
