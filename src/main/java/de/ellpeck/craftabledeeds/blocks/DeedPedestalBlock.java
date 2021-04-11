@@ -8,7 +8,7 @@ import net.minecraft.block.Blocks;
 import net.minecraft.block.ContainerBlock;
 import net.minecraft.entity.item.ItemEntity;
 import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.inventory.ItemStackHelper;
+import net.minecraft.entity.player.ServerPlayerEntity;
 import net.minecraft.item.ItemStack;
 import net.minecraft.tileentity.TileEntity;
 import net.minecraft.util.ActionResultType;
@@ -19,8 +19,8 @@ import net.minecraft.util.math.shapes.ISelectionContext;
 import net.minecraft.util.math.shapes.VoxelShape;
 import net.minecraft.world.IBlockReader;
 import net.minecraft.world.World;
+import net.minecraftforge.fml.network.NetworkHooks;
 import net.minecraftforge.items.IItemHandler;
-import net.minecraftforge.items.ItemHandlerHelper;
 import net.minecraftforge.items.ItemStackHandler;
 
 import javax.annotation.Nullable;
@@ -38,24 +38,34 @@ public class DeedPedestalBlock extends ContainerBlock {
         TileEntity tile = worldIn.getTileEntity(pos);
         if (!(tile instanceof DeedPedestalTileEntity))
             return ActionResultType.FAIL;
-        ItemStackHandler items = ((DeedPedestalTileEntity) tile).items;
-        ItemStack pedestal = items.getStackInSlot(0);
+        DeedPedestalTileEntity pedestal = (DeedPedestalTileEntity) tile;
+        ItemStackHandler items = pedestal.items;
+        ItemStack contained = items.getStackInSlot(0);
         ItemStack hand = player.getHeldItem(handIn);
-        if (pedestal.isEmpty()) {
+        if (contained.isEmpty()) {
+            // putting a deed in
             if (hand.getItem() == CraftableDeeds.FILLED_DEED.get()) {
                 if (!worldIn.isRemote) {
                     items.setStackInSlot(0, hand);
                     player.setHeldItem(handIn, ItemStack.EMPTY);
-                    PacketHandler.sendTileEntityToClients(tile);
+                    PacketHandler.sendTileEntityToClients(pedestal);
                 }
                 return ActionResultType.SUCCESS;
             }
         } else {
+            // opening the management ui
+            if (pedestal.canOpenSettings(player) && !player.isSneaking()) {
+                if (!worldIn.isRemote)
+                    NetworkHooks.openGui((ServerPlayerEntity) player, pedestal, pos);
+                return ActionResultType.SUCCESS;
+            }
+
+            // taking out the deed
             if (!worldIn.isRemote) {
-                if (!player.addItemStackToInventory(pedestal))
-                    worldIn.addEntity(new ItemEntity(worldIn, pos.getX() + 0.5F, pos.getY() + 1, pos.getZ() + 0.5F, pedestal));
-                pedestal.setCount(0);
-                PacketHandler.sendTileEntityToClients(tile);
+                if (!player.addItemStackToInventory(contained))
+                    worldIn.addEntity(new ItemEntity(worldIn, pos.getX() + 0.5F, pos.getY() + 1, pos.getZ() + 0.5F, contained));
+                contained.setCount(0);
+                PacketHandler.sendTileEntityToClients(pedestal);
             }
             return ActionResultType.SUCCESS;
         }

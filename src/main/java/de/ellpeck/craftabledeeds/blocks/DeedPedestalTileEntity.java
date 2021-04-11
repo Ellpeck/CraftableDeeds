@@ -3,7 +3,13 @@ package de.ellpeck.craftabledeeds.blocks;
 import de.ellpeck.craftabledeeds.CraftableDeeds;
 import de.ellpeck.craftabledeeds.DeedStorage;
 import de.ellpeck.craftabledeeds.items.FilledDeedItem;
+import de.ellpeck.craftabledeeds.ui.DeedPedestalContainer;
 import net.minecraft.block.BlockState;
+import net.minecraft.entity.player.PlayerEntity;
+import net.minecraft.entity.player.PlayerInventory;
+import net.minecraft.inventory.container.Container;
+import net.minecraft.inventory.container.INamedContainerProvider;
+import net.minecraft.item.FilledMapItem;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.CompoundNBT;
 import net.minecraft.network.IPacket;
@@ -13,6 +19,8 @@ import net.minecraft.tileentity.ITickableTileEntity;
 import net.minecraft.tileentity.TileEntity;
 import net.minecraft.util.math.AxisAlignedBB;
 import net.minecraft.util.math.ChunkPos;
+import net.minecraft.util.text.ITextComponent;
+import net.minecraft.util.text.TranslationTextComponent;
 import net.minecraft.world.server.ServerChunkProvider;
 import net.minecraft.world.storage.MapData;
 import net.minecraftforge.api.distmarker.Dist;
@@ -21,7 +29,7 @@ import net.minecraftforge.items.ItemStackHandler;
 
 import javax.annotation.Nullable;
 
-public class DeedPedestalTileEntity extends TileEntity implements ITickableTileEntity {
+public class DeedPedestalTileEntity extends TileEntity implements ITickableTileEntity, INamedContainerProvider {
 
     public final ItemStackHandler items = new ItemStackHandler(1);
 
@@ -29,11 +37,26 @@ public class DeedPedestalTileEntity extends TileEntity implements ITickableTileE
         super(CraftableDeeds.DEED_PEDESTAL_TILE.get());
     }
 
-    public MapData getMapData() {
+    public int getMapId() {
         ItemStack stack = this.items.getStackInSlot(0);
         if (stack.getItem() == CraftableDeeds.FILLED_DEED.get())
-            return FilledDeedItem.getData(stack, this.world);
+            return FilledMapItem.getMapId(stack);
+        return -1;
+    }
+
+    public MapData getMapData() {
+        int id = this.getMapId();
+        if (id >= 0)
+            return this.world.getMapData(FilledDeedItem.getMapName(id));
         return null;
+    }
+
+    public boolean canOpenSettings(PlayerEntity player) {
+        int mapId = this.getMapId();
+        if (mapId < 0)
+            return false;
+        DeedStorage.Claim claim = DeedStorage.get(this.world).getClaim(mapId);
+        return claim.owner.equals(player.getUniqueID());
     }
 
     @Override
@@ -103,5 +126,16 @@ public class DeedPedestalTileEntity extends TileEntity implements ITickableTileE
     @OnlyIn(Dist.CLIENT)
     public AxisAlignedBB getRenderBoundingBox() {
         return new AxisAlignedBB(this.pos, this.pos.add(1, 2, 1));
+    }
+
+    @Override
+    public ITextComponent getDisplayName() {
+        return new TranslationTextComponent("container." + CraftableDeeds.ID + ".deed_pedestal");
+    }
+
+    @Nullable
+    @Override
+    public Container createMenu(int id, PlayerInventory inv, PlayerEntity player) {
+        return new DeedPedestalContainer(id, player, this.pos);
     }
 }
