@@ -12,5 +12,7 @@
     "info.craftabledeeds.claim_added": "The area has been claimed successfully",
     "info.craftabledeeds.claim_removed": "The area has been unclaimed successfully",
     "info.craftabledeeds.disallowed_dimension": "Using deeds is not allowed in this dimension",
-    "container.craftabledeeds.deed_pedestal": "Deed Pedestal"
+    "container.craftabledeeds.deed_pedestal": "Deed Pedestal",
+    "tab.craftabledeeds.players": "Players",
+    "tab.craftabledeeds.blocks": "Blocks"
 }

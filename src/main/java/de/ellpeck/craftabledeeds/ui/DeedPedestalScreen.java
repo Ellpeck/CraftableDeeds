@@ -5,14 +5,17 @@ import com.mojang.blaze3d.systems.RenderSystem;
 import de.ellpeck.craftabledeeds.CraftableDeeds;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.screen.inventory.ContainerScreen;
+import net.minecraft.client.gui.widget.Widget;
 import net.minecraft.client.gui.widget.button.AbstractButton;
 import net.minecraft.entity.player.PlayerInventory;
 import net.minecraft.util.ResourceLocation;
 import net.minecraft.util.text.ITextComponent;
 import net.minecraft.util.text.TranslationTextComponent;
 
+import java.util.Collections;
+import java.util.List;
 import java.util.Locale;
-import java.util.function.Consumer;
+import java.util.function.Function;
 
 public class DeedPedestalScreen extends ContainerScreen<DeedPedestalContainer> {
 
@@ -64,20 +67,17 @@ public class DeedPedestalScreen extends ContainerScreen<DeedPedestalContainer> {
 
         // open tab
         this.currentTab = newTab;
-        newTab.init.accept(this);
+        for (Widget w : newTab.init.apply(this))
+            this.addButton(w);
     }
 
     private enum Tab {
-        PLAYERS(s -> {
-        }),
-        FACTIONS(s -> {
-        }),
-        BLOCKS(s -> {
-        });
+        PLAYERS(s -> Collections.emptyList()),
+        BLOCKS(s -> Collections.emptyList());
 
-        public Consumer<DeedPedestalScreen> init;
+        public Function<DeedPedestalScreen, List<Widget>> init;
 
-        Tab(Consumer<DeedPedestalScreen> init) {
+        Tab(Function<DeedPedestalScreen, List<Widget>> init) {
             this.init = init;
         }
     }
@@ -104,15 +104,18 @@ public class DeedPedestalScreen extends ContainerScreen<DeedPedestalContainer> {
         public void renderButton(MatrixStack matrixStack, int mouseX, int mouseY, float partialTicks) {
             Minecraft.getInstance().getTextureManager().bindTexture(TEXTURE);
             int v = this.v;
-            if (this.isHovered() || DeedPedestalScreen.this.currentTab == this.tab)
+            if (DeedPedestalScreen.this.currentTab == this.tab)
                 v += this.height;
 
             RenderSystem.enableDepthTest();
-            blit(matrixStack, this.x, this.y, (float) this.u, (float) v, this.width, this.height, 256, 256);
-            if (this.isHovered()) {
+            blit(matrixStack, this.x, this.y, this.u, v, this.width, this.height, 256, 256);
+            if (this.isHovered())
                 this.renderToolTip(matrixStack, mouseX, mouseY);
-            }
+        }
 
+        @Override
+        public void renderToolTip(MatrixStack matrixStack, int mouseX, int mouseY) {
+            DeedPedestalScreen.this.renderTooltip(matrixStack, this.getMessage(), mouseX, mouseY);
         }
     }
 }
