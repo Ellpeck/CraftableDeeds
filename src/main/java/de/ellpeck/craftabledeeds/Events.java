@@ -3,12 +3,16 @@ package de.ellpeck.craftabledeeds;
 import net.minecraft.block.Block;
 import net.minecraft.block.BlockState;
 import net.minecraft.entity.Entity;
+import net.minecraft.entity.boss.WitherEntity;
 import net.minecraft.entity.item.HangingEntity;
+import net.minecraft.entity.item.TNTEntity;
 import net.minecraft.entity.monster.CreeperEntity;
 import net.minecraft.entity.monster.EndermanEntity;
 import net.minecraft.entity.monster.ZombieEntity;
 import net.minecraft.entity.player.PlayerEntity;
+import net.minecraft.entity.projectile.WitherSkullEntity;
 import net.minecraft.util.math.BlockPos;
+import net.minecraft.world.Explosion;
 import net.minecraftforge.event.RegisterCommandsEvent;
 import net.minecraftforge.event.TickEvent;
 import net.minecraftforge.event.entity.EntityMobGriefingEvent;
@@ -16,6 +20,7 @@ import net.minecraftforge.event.entity.player.AttackEntityEvent;
 import net.minecraftforge.event.entity.player.PlayerEvent;
 import net.minecraftforge.event.entity.player.PlayerInteractEvent;
 import net.minecraftforge.event.world.BlockEvent;
+import net.minecraftforge.event.world.ExplosionEvent;
 import net.minecraftforge.eventbus.api.Event;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
@@ -94,10 +99,26 @@ public final class Events {
     @SubscribeEvent
     public static void onMobGriefing(EntityMobGriefingEvent event) {
         Entity entity = event.getEntity();
-        // creeper explosions, endermen picking stuff up and zombies breaking down doors should be disallowed
-        if (entity instanceof CreeperEntity || entity instanceof EndermanEntity || entity instanceof ZombieEntity) {
+        // endermen picking stuff up and zombies breaking down doors should be disallowed
+        if (entity instanceof EndermanEntity || entity instanceof ZombieEntity) {
             if (shouldCancelInteraction(entity, entity.getPosition()))
                 event.setResult(Event.Result.DENY);
+        }
+    }
+
+    @SubscribeEvent
+    public static void doExplosion(ExplosionEvent.Start event) {
+        Explosion explosion = event.getExplosion();
+        Entity exploder = explosion.getExploder();
+        if (exploder != null && shouldCancelInteraction(exploder, new BlockPos(explosion.getPosition()))) {
+            if (exploder instanceof CreeperEntity && CraftableDeeds.allowCreeperExplosions.get())
+                return;
+            if (exploder instanceof TNTEntity && CraftableDeeds.allowTntExplosions.get())
+                return;
+            if ((exploder instanceof WitherEntity || exploder instanceof WitherSkullEntity) && CraftableDeeds.allowWitherExplosions.get())
+                return;
+
+            event.setCanceled(true);
         }
     }
 
