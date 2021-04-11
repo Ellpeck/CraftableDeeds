@@ -133,7 +133,7 @@ public final class Events {
             return false;
         DeedStorage storage = DeedStorage.get(entity.world);
         DeedStorage.Claim claim = storage.getClaim(pos.getX(), pos.getY(), pos.getZ());
-        return claim != null && claim.isActive() && !claim.owner.equals(entity.getUniqueID()) && !claim.friends.contains(entity.getUniqueID());
+        return claim != null && claim.isActive() && !claim.owner.equals(entity.getUniqueID());
     }
 
     private static boolean isExempt(List<? extends String> config, Block block) {

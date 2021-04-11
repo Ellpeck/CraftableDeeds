@@ -5,9 +5,7 @@ import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.item.FilledMapItem;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.CompoundNBT;
-import net.minecraft.nbt.INBT;
 import net.minecraft.nbt.ListNBT;
-import net.minecraft.nbt.LongArrayNBT;
 import net.minecraft.util.math.AxisAlignedBB;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.World;
@@ -17,7 +15,9 @@ import net.minecraft.world.storage.WorldSavedData;
 import net.minecraftforge.common.util.Constants;
 import net.minecraftforge.common.util.INBTSerializable;
 
-import java.util.*;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.UUID;
 
 public class DeedStorage extends WorldSavedData {
 
@@ -133,7 +133,6 @@ public class DeedStorage extends WorldSavedData {
 
     public static class Claim implements INBTSerializable<CompoundNBT> {
 
-        public final List<UUID> friends = new ArrayList<>();
         public int mapId;
         public UUID owner;
         public BlockPos pedestal;
@@ -189,8 +188,6 @@ public class DeedStorage extends WorldSavedData {
             if (this.pedestal != null)
                 nbt.putLong("pedestal", this.pedestal.toLong());
             ListNBT friends = new ListNBT();
-            for (UUID friend : this.friends)
-                friends.add(new LongArrayNBT(new long[]{friend.getMostSignificantBits(), friend.getLeastSignificantBits()}));
             nbt.put("friends", friends);
             return nbt;
         }
@@ -203,26 +200,6 @@ public class DeedStorage extends WorldSavedData {
             this.zCenter = nbt.getInt("zCenter");
             this.scale = nbt.getInt("scale");
             this.pedestal = nbt.contains("pedestal") ? BlockPos.fromLong(nbt.getLong("pedestal")) : null;
-            this.friends.clear();
-            ListNBT friends = nbt.getList("friends", Constants.NBT.TAG_LONG_ARRAY);
-            for (INBT val : friends) {
-                long[] friend = ((LongArrayNBT) val).getAsLongArray();
-                this.friends.add(new UUID(friend[0], friend[1]));
-            }
-        }
-
-        @Override
-        public String toString() {
-            return "Claim{" +
-                    "world=" + this.world +
-                    ", friends=" + this.friends +
-                    ", mapId=" + this.mapId +
-                    ", owner=" + this.owner +
-                    ", xCenter=" + this.xCenter +
-                    ", zCenter=" + this.zCenter +
-                    ", scale=" + this.scale +
-                    ", pedestal=" + this.pedestal +
-                    '}';
         }
     }
 }
