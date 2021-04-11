@@ -21,7 +21,7 @@ import java.util.List;
 public class EmptyDeedItem extends Item {
 
     public EmptyDeedItem() {
-        super(new Properties().maxStackSize(1).group(ItemGroup.MISC));
+        super(new Properties().maxStackSize(1).group(ItemGroup.MISC).isImmuneToFire());
     }
 
     @Override

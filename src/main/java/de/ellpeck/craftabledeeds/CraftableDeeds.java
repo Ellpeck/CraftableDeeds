@@ -43,7 +43,7 @@ public class CraftableDeeds {
     public static final RegistryObject<Item> FILLED_DEED = ITEMS.register("filled_deed", FilledDeedItem::new);
 
     public static final RegistryObject<Block> DEED_PEDESTAL_BLOCK = BLOCKS.register("deed_pedestal", DeedPedestalBlock::new);
-    public static final RegistryObject<Item> DEED_PEDESTAL_ITEM = ITEMS.register("deed_pedestal", () -> new BlockItem(DEED_PEDESTAL_BLOCK.get(), new Item.Properties().group(ItemGroup.DECORATIONS)));
+    public static final RegistryObject<Item> DEED_PEDESTAL_ITEM = ITEMS.register("deed_pedestal", () -> new BlockItem(DEED_PEDESTAL_BLOCK.get(), new Item.Properties().group(ItemGroup.DECORATIONS).isImmuneToFire()));
     public static final RegistryObject<TileEntityType<DeedPedestalTileEntity>> DEED_PEDESTAL_TILE = TILES.register("deed_pedestal", () -> TileEntityType.Builder.create(DeedPedestalTileEntity::new, DEED_PEDESTAL_BLOCK.get()).build(null));
 
     public static ForgeConfigSpec.ConfigValue<Boolean> requirePedestals;

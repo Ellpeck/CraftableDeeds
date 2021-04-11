@@ -27,7 +27,7 @@ import java.util.UUID;
 public class FilledDeedItem extends FilledMapItem {
 
     public FilledDeedItem() {
-        super(new Properties().maxStackSize(1));
+        super(new Properties().maxStackSize(1).isImmuneToFire());
     }
 
     @Override
