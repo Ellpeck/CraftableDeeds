@@ -13,6 +13,7 @@ import net.minecraft.entity.monster.EndermanEntity;
 import net.minecraft.entity.monster.ZombieEntity;
 import net.minecraft.entity.passive.IronGolemEntity;
 import net.minecraft.entity.passive.SnowGolemEntity;
+import net.minecraft.entity.passive.TameableEntity;
 import net.minecraft.entity.passive.WolfEntity;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.entity.projectile.WitherSkullEntity;
@@ -44,8 +45,11 @@ public final class Events {
                 PacketHandler.sendDeeds((PlayerEntity) entity);
             } else if (entity instanceof IronGolemEntity || entity instanceof SnowGolemEntity || entity instanceof WolfEntity) {
                 MobEntity mob = ((MobEntity) entity);
+                // hack that allows iron golems to attack players
+                if (mob instanceof IronGolemEntity)
+                    ((IronGolemEntity) mob).setPlayerCreated(false);
                 mob.targetSelector.addGoal(3, new NearestAttackableTargetGoal<>(mob, PlayerEntity.class, 10, false, false, p -> {
-                    if (mob instanceof WolfEntity && !((WolfEntity) mob).isTamed())
+                    if (mob instanceof TameableEntity && !((TameableEntity) mob).isTamed())
                         return false;
                     return isDisallowedHere(p, p.getPosition(), s -> !s.loyalMobsAttack);
                 }));
