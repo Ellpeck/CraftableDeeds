@@ -3,21 +3,26 @@ package de.ellpeck.craftabledeeds;
 import net.minecraft.block.Block;
 import net.minecraft.block.BlockState;
 import net.minecraft.entity.Entity;
+import net.minecraft.entity.MobEntity;
+import net.minecraft.entity.ai.goal.NearestAttackableTargetGoal;
 import net.minecraft.entity.boss.WitherEntity;
 import net.minecraft.entity.item.HangingEntity;
 import net.minecraft.entity.item.TNTEntity;
 import net.minecraft.entity.monster.CreeperEntity;
 import net.minecraft.entity.monster.EndermanEntity;
 import net.minecraft.entity.monster.ZombieEntity;
+import net.minecraft.entity.passive.IronGolemEntity;
+import net.minecraft.entity.passive.SnowGolemEntity;
+import net.minecraft.entity.passive.WolfEntity;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.entity.projectile.WitherSkullEntity;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.Explosion;
 import net.minecraftforge.event.RegisterCommandsEvent;
 import net.minecraftforge.event.TickEvent;
+import net.minecraftforge.event.entity.EntityJoinWorldEvent;
 import net.minecraftforge.event.entity.EntityMobGriefingEvent;
 import net.minecraftforge.event.entity.player.AttackEntityEvent;
-import net.minecraftforge.event.entity.player.PlayerEvent;
 import net.minecraftforge.event.entity.player.PlayerInteractEvent;
 import net.minecraftforge.event.world.BlockEvent;
 import net.minecraftforge.event.world.ExplosionEvent;
@@ -26,18 +31,26 @@ import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
 
 import java.util.List;
+import java.util.function.Function;
 
 @Mod.EventBusSubscriber
 public final class Events {
 
     @SubscribeEvent
-    public static void onPlayerTeleport(PlayerEvent.PlayerChangedDimensionEvent event) {
-        PacketHandler.sendDeeds(event.getPlayer());
-    }
-
-    @SubscribeEvent
-    public static void onPlayerLogin(PlayerEvent.PlayerLoggedInEvent event) {
-        PacketHandler.sendDeeds(event.getPlayer());
+    public static void onPlayerJoin(EntityJoinWorldEvent event) {
+        Entity entity = event.getEntity();
+        if (!entity.world.isRemote) {
+            if (entity instanceof PlayerEntity) {
+                PacketHandler.sendDeeds((PlayerEntity) entity);
+            } else if (entity instanceof IronGolemEntity || entity instanceof SnowGolemEntity || entity instanceof WolfEntity) {
+                MobEntity mob = ((MobEntity) entity);
+                mob.targetSelector.addGoal(3, new NearestAttackableTargetGoal<>(mob, PlayerEntity.class, 10, false, false, p -> {
+                    if (mob instanceof WolfEntity && !((WolfEntity) mob).isTamed())
+                        return false;
+                    return isDisallowedHere(p, p.getPosition(), s -> !s.loyalMobsAttack);
+                }));
+            }
+        }
     }
 
     @SubscribeEvent
@@ -48,8 +61,8 @@ public final class Events {
 
     @SubscribeEvent
     public static void onBlockBreak(BlockEvent.BreakEvent event) {
-        if (shouldCancelInteraction(event.getPlayer(), event.getPos())) {
-            if (isExempt(CraftableDeeds.breakableBlocks.get(), event.getState().getBlock()))
+        if (isDisallowedHere(event.getPlayer(), event.getPos(), s -> s.canPlaceBreak)) {
+            if (isExemptConfig(CraftableDeeds.breakableBlocks.get(), event.getState().getBlock()))
                 return;
             event.setCanceled(true);
         }
@@ -57,42 +70,43 @@ public final class Events {
 
     @SubscribeEvent
     public static void onBlockPlace(BlockEvent.EntityPlaceEvent event) {
-        if (event.getEntity() instanceof PlayerEntity && shouldCancelInteraction(event.getEntity(), event.getPos()))
+        if (event.getEntity() instanceof PlayerEntity && isDisallowedHere(event.getEntity(), event.getPos(), s -> s.canPlaceBreak))
             event.setCanceled(true);
     }
 
     @SubscribeEvent
     public static void onBlockInteract(PlayerInteractEvent.RightClickBlock event) {
-        if (shouldCancelInteraction(event.getPlayer(), event.getPos())) {
+        if (isDisallowedHere(event.getPlayer(), event.getPos(), s -> s.canOpenContainers)) {
             BlockState state = event.getWorld().getBlockState(event.getPos());
             // always allow interacting with the pedestal!
             if (state.getBlock() == CraftableDeeds.DEED_PEDESTAL_BLOCK.get())
                 return;
-            if (isExempt(CraftableDeeds.interactableBlocks.get(), state.getBlock()))
+            if (isExemptConfig(CraftableDeeds.interactableBlocks.get(), state.getBlock()))
                 return;
 
             if (!CraftableDeeds.allowOpeningBlocks.get())
                 event.setUseBlock(Event.Result.DENY);
-            event.setUseItem(Event.Result.DENY);
         }
+        if (isDisallowedHere(event.getPlayer(), event.getPos(), s -> s.canPlaceBreak))
+            event.setUseItem(Event.Result.DENY);
     }
 
     @SubscribeEvent
     public static void onBlockClick(PlayerInteractEvent.LeftClickBlock event) {
-        if (shouldCancelInteraction(event.getPlayer(), event.getPos()))
+        if (isDisallowedHere(event.getPlayer(), event.getPos(), s -> s.canPlaceBreak))
             event.setCanceled(true);
     }
 
     @SubscribeEvent
     public static void onEntityInteract(PlayerInteractEvent.EntityInteract event) {
-        if (shouldCancelInteraction(event.getPlayer(), event.getPos()))
+        if (isDisallowedHere(event.getPlayer(), event.getPos(), null))
             event.setCanceled(true);
     }
 
     @SubscribeEvent
     public static void onEntityAttack(AttackEntityEvent event) {
         Entity target = event.getTarget();
-        if (target instanceof HangingEntity && shouldCancelInteraction(event.getPlayer(), target.getPosition()))
+        if (target instanceof HangingEntity && isDisallowedHere(event.getPlayer(), target.getPosition(), null))
             event.setCanceled(true);
     }
 
@@ -101,7 +115,7 @@ public final class Events {
         Entity entity = event.getEntity();
         // endermen picking stuff up and zombies breaking down doors should be disallowed
         if (entity instanceof EndermanEntity || entity instanceof ZombieEntity) {
-            if (shouldCancelInteraction(entity, entity.getPosition()))
+            if (isDisallowedHere(entity, entity.getPosition(), null))
                 event.setResult(Event.Result.DENY);
         }
     }
@@ -110,7 +124,7 @@ public final class Events {
     public static void doExplosion(ExplosionEvent.Start event) {
         Explosion explosion = event.getExplosion();
         Entity exploder = explosion.getExploder();
-        if (exploder != null && shouldCancelInteraction(exploder, new BlockPos(explosion.getPosition()))) {
+        if (exploder != null && isDisallowedHere(exploder, new BlockPos(explosion.getPosition()), null)) {
             if (exploder instanceof CreeperEntity && CraftableDeeds.allowCreeperExplosions.get())
                 return;
             if (exploder instanceof TNTEntity && CraftableDeeds.allowTntExplosions.get())
@@ -127,20 +141,29 @@ public final class Events {
         DeedCommand.register(event.getDispatcher());
     }
 
-    private static boolean shouldCancelInteraction(Entity entity, BlockPos pos) {
+    private static boolean isDisallowedHere(Entity entity, BlockPos pos, Function<DeedStorage.PlayerSettings, Boolean> relevantSetting) {
         // opped players should be ignored
         if (entity.hasPermissionLevel(2))
             return false;
         DeedStorage storage = DeedStorage.get(entity.world);
         DeedStorage.Claim claim = storage.getClaim(pos.getX(), pos.getY(), pos.getZ());
-        return claim != null && claim.isActive() && !claim.owner.equals(entity.getUniqueID());
+        if (claim == null || !claim.isActive())
+            return false;
+        // allow players that are whitelisted in the pedestal settings
+        if (relevantSetting != null) {
+            DeedStorage.PlayerSettings settings = claim.playerSettings.computeIfAbsent(entity.getUniqueID(),
+                    u -> entity instanceof PlayerEntity ? new DeedStorage.PlayerSettings((PlayerEntity) entity) : null);
+            if (settings != null && relevantSetting.apply(settings))
+                return false;
+        }
+        return !claim.owner.equals(entity.getUniqueID());
     }
 
-    private static boolean isExempt(List<? extends String> config, Block block) {
-        return isExempt(config, block.getRegistryName().toString());
+    private static boolean isExemptConfig(List<? extends String> config, Block block) {
+        return isExemptConfig(config, block.getRegistryName().toString());
     }
 
-    private static boolean isExempt(List<? extends String> config, String search) {
+    private static boolean isExemptConfig(List<? extends String> config, String search) {
         return config.stream().anyMatch(search::matches);
     }
 }
