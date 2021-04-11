@@ -4,9 +4,6 @@ import de.ellpeck.craftabledeeds.CraftableDeeds;
 import de.ellpeck.craftabledeeds.DeedStorage;
 import de.ellpeck.craftabledeeds.items.FilledDeedItem;
 import net.minecraft.block.BlockState;
-import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.entity.player.ServerPlayerEntity;
-import net.minecraft.item.FilledMapItem;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.CompoundNBT;
 import net.minecraft.network.IPacket;
@@ -14,15 +11,15 @@ import net.minecraft.network.NetworkManager;
 import net.minecraft.network.play.server.SUpdateTileEntityPacket;
 import net.minecraft.tileentity.ITickableTileEntity;
 import net.minecraft.tileentity.TileEntity;
+import net.minecraft.util.math.AxisAlignedBB;
 import net.minecraft.util.math.ChunkPos;
-import net.minecraft.world.chunk.Chunk;
 import net.minecraft.world.server.ServerChunkProvider;
-import net.minecraft.world.server.ServerWorld;
 import net.minecraft.world.storage.MapData;
+import net.minecraftforge.api.distmarker.Dist;
+import net.minecraftforge.api.distmarker.OnlyIn;
 import net.minecraftforge.items.ItemStackHandler;
 
 import javax.annotation.Nullable;
-import java.util.stream.Stream;
 
 public class DeedPedestalTileEntity extends TileEntity implements ITickableTileEntity {
 
@@ -100,5 +97,11 @@ public class DeedPedestalTileEntity extends TileEntity implements ITickableTileE
     @Override
     public void onDataPacket(NetworkManager net, SUpdateTileEntityPacket pkt) {
         this.handleUpdateTag(this.getBlockState(), pkt.getNbtCompound());
+    }
+
+    @Override
+    @OnlyIn(Dist.CLIENT)
+    public AxisAlignedBB getRenderBoundingBox() {
+        return new AxisAlignedBB(this.pos, this.pos.add(1, 2, 1));
     }
 }
