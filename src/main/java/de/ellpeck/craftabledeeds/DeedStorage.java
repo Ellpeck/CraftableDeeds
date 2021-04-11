@@ -5,6 +5,7 @@ import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.item.FilledMapItem;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.CompoundNBT;
+import net.minecraft.nbt.INBT;
 import net.minecraft.nbt.ListNBT;
 import net.minecraft.util.math.AxisAlignedBB;
 import net.minecraft.util.math.BlockPos;
@@ -133,6 +134,7 @@ public class DeedStorage extends WorldSavedData {
 
     public static class Claim implements INBTSerializable<CompoundNBT> {
 
+        public final Map<UUID, PlayerSettings> playerSettings = new HashMap<>();
         public int mapId;
         public UUID owner;
         public BlockPos pedestal;
@@ -187,8 +189,10 @@ public class DeedStorage extends WorldSavedData {
             nbt.putInt("scale", this.scale);
             if (this.pedestal != null)
                 nbt.putLong("pedestal", this.pedestal.toLong());
-            ListNBT friends = new ListNBT();
-            nbt.put("friends", friends);
+            ListNBT playerSettings = new ListNBT();
+            for (PlayerSettings settings : this.playerSettings.values())
+                playerSettings.add(settings.serializeNBT());
+            nbt.put("playerSettings", playerSettings);
             return nbt;
         }
 
@@ -200,6 +204,49 @@ public class DeedStorage extends WorldSavedData {
             this.zCenter = nbt.getInt("zCenter");
             this.scale = nbt.getInt("scale");
             this.pedestal = nbt.contains("pedestal") ? BlockPos.fromLong(nbt.getLong("pedestal")) : null;
+            this.playerSettings.clear();
+            for (INBT inbt : nbt.getList("playerSettings", Constants.NBT.TAG_COMPOUND)) {
+                PlayerSettings settings = new PlayerSettings((CompoundNBT) inbt);
+                this.playerSettings.put(settings.id, settings);
+            }
+        }
+    }
+
+    public static class PlayerSettings implements INBTSerializable<CompoundNBT> {
+
+        public UUID id;
+        public String name;
+        public boolean canPlaceBreak;
+        public boolean loyalMobsAttack;
+        public boolean canOpenContainers = true;
+
+        public PlayerSettings(PlayerEntity player) {
+            this.id = player.getUniqueID();
+            this.name = player.getDisplayName().getString();
+        }
+
+        public PlayerSettings(CompoundNBT nbt) {
+            this.deserializeNBT(nbt);
+        }
+
+        @Override
+        public CompoundNBT serializeNBT() {
+            CompoundNBT nbt = new CompoundNBT();
+            nbt.putUniqueId("id", this.id);
+            nbt.putString("name", this.name);
+            nbt.putBoolean("canPlaceBreak", this.canPlaceBreak);
+            nbt.putBoolean("loyalMobsAttack", this.loyalMobsAttack);
+            nbt.putBoolean("canOpenContainers", this.canOpenContainers);
+            return nbt;
+        }
+
+        @Override
+        public void deserializeNBT(CompoundNBT nbt) {
+            this.id = nbt.getUniqueId("id");
+            this.name = nbt.getString("name");
+            this.canPlaceBreak = nbt.getBoolean("canPlaceBreak");
+            this.loyalMobsAttack = nbt.getBoolean("loyalMobsAttack");
+            this.canOpenContainers = nbt.getBoolean("canOpenContainers");
         }
     }
 }

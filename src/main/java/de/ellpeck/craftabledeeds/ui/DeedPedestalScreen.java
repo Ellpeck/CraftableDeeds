@@ -3,29 +3,37 @@ package de.ellpeck.craftabledeeds.ui;
 import com.mojang.blaze3d.matrix.MatrixStack;
 import com.mojang.blaze3d.systems.RenderSystem;
 import de.ellpeck.craftabledeeds.CraftableDeeds;
+import de.ellpeck.craftabledeeds.DeedStorage;
+import de.ellpeck.craftabledeeds.PacketHandler;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.screen.inventory.ContainerScreen;
 import net.minecraft.client.gui.widget.Widget;
 import net.minecraft.client.gui.widget.button.AbstractButton;
+import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.entity.player.PlayerInventory;
 import net.minecraft.util.ResourceLocation;
+import net.minecraft.util.math.MathHelper;
 import net.minecraft.util.text.ITextComponent;
+import net.minecraft.util.text.StringTextComponent;
 import net.minecraft.util.text.TranslationTextComponent;
 
-import java.util.Collections;
-import java.util.List;
-import java.util.Locale;
+import java.util.*;
 import java.util.function.Function;
 
 public class DeedPedestalScreen extends ContainerScreen<DeedPedestalContainer> {
 
     private static final ResourceLocation TEXTURE = new ResourceLocation(CraftableDeeds.ID, "textures/ui/deed_pedestal.png");
+    private static final int MAX_WIDGET_AMT_Y = 5;
+
     private Tab currentTab;
+    private int scrollOffset;
+    private int widgetAmountY;
+    private boolean isScrolling;
 
     public DeedPedestalScreen(DeedPedestalContainer screenContainer, PlayerInventory inv, ITextComponent titleIn) {
         super(screenContainer, inv, titleIn);
-        this.xSize = 248;
-        this.ySize = 166;
+        this.xSize = 240;
+        this.ySize = 144;
     }
 
     @Override
@@ -39,17 +47,70 @@ public class DeedPedestalScreen extends ContainerScreen<DeedPedestalContainer> {
         this.renderBackground(matrixStack);
         super.render(matrixStack, mouseX, mouseY, partialTicks);
         this.renderHoveredTooltip(matrixStack, mouseX, mouseY);
+        for (Widget widget : this.buttons) {
+            if (widget.isHovered())
+                widget.renderToolTip(matrixStack, mouseX, mouseY);
+        }
     }
 
     @Override
     protected void drawGuiContainerBackgroundLayer(MatrixStack matrixStack, float partialTicks, int x, int y) {
         this.minecraft.textureManager.bindTexture(TEXTURE);
         this.blit(matrixStack, this.guiLeft, this.guiTop, 0, 0, this.xSize, this.ySize);
+
+        if (this.widgetAmountY > MAX_WIDGET_AMT_Y) {
+            float percentage = this.scrollOffset / (float) (this.widgetAmountY - MAX_WIDGET_AMT_Y);
+            this.blit(matrixStack, this.guiLeft + 223, this.guiTop + 19 + (int) (percentage * (120 - 15)), 232, 241, 12, 15);
+        } else {
+            this.blit(matrixStack, this.guiLeft + 223, this.guiTop + 19, 244, 241, 12, 15);
+        }
     }
 
     @Override
     protected void drawGuiContainerForegroundLayer(MatrixStack matrixStack, int x, int y) {
         this.font.func_243248_b(matrixStack, this.title, this.titleX, this.titleY, 4210752);
+    }
+
+    @Override
+    public boolean mouseClicked(double mouseX, double mouseY, int button) {
+        if (button == 0 && mouseX >= this.guiLeft + 223 && mouseY >= this.guiTop + 19 && mouseX < this.guiLeft + 223 + 12 && mouseY < this.guiTop + 19 + 120) {
+            this.isScrolling = true;
+            return true;
+        }
+        return super.mouseClicked(mouseX, mouseY, button);
+    }
+
+    @Override
+    public boolean mouseReleased(double mouseX, double mouseY, int button) {
+        if (button == 0)
+            this.isScrolling = false;
+        return super.mouseReleased(mouseX, mouseY, button);
+    }
+
+    @Override
+    public boolean mouseDragged(double mouseX, double mouseY, int i, double j, double k) {
+        if (this.isScrolling) {
+            float percentage = MathHelper.clamp(((float) mouseY - (this.guiTop + 19)) / (120 - 15), 0, 1);
+            int offset = (int) (percentage * (float) (this.widgetAmountY - MAX_WIDGET_AMT_Y));
+            if (offset != this.scrollOffset) {
+                this.scrollOffset = offset;
+                this.setTab(this.currentTab);
+            }
+            return true;
+        }
+        return super.mouseDragged(mouseX, mouseY, i, j, k);
+    }
+
+    @Override
+    public boolean mouseScrolled(double x, double y, double scroll) {
+        if (this.widgetAmountY > MAX_WIDGET_AMT_Y) {
+            int offset = MathHelper.clamp(this.scrollOffset - (int) Math.signum(scroll), 0, this.widgetAmountY - MAX_WIDGET_AMT_Y);
+            if (offset != this.scrollOffset) {
+                this.scrollOffset = offset;
+                this.setTab(this.currentTab);
+            }
+        }
+        return true;
     }
 
     private void setTab(Tab newTab) {
@@ -67,18 +128,18 @@ public class DeedPedestalScreen extends ContainerScreen<DeedPedestalContainer> {
 
         // open tab
         this.currentTab = newTab;
-        for (Widget w : newTab.init.apply(this))
-            this.addButton(w);
-    }
-
-    private enum Tab {
-        PLAYERS(s -> Collections.emptyList()),
-        BLOCKS(s -> Collections.emptyList());
-
-        public Function<DeedPedestalScreen, List<Widget>> init;
-
-        Tab(Function<DeedPedestalScreen, List<Widget>> init) {
-            this.init = init;
+        List<Widget> content = newTab.init.apply(this);
+        this.widgetAmountY = content.size() / newTab.widgetAmountX;
+        for (int y = 0; y < MAX_WIDGET_AMT_Y; y++) {
+            if (y >= this.widgetAmountY)
+                return;
+            int xOffset = 4;
+            for (int x = 0; x < newTab.widgetAmountX; x++) {
+                Widget widget = this.addButton(content.get((this.scrollOffset + y) * newTab.widgetAmountX + x));
+                widget.x = this.guiLeft + xOffset;
+                widget.y = this.guiTop + 18 + 25 * y;
+                xOffset += widget.getWidth() + 1;
+            }
         }
     }
 
@@ -97,6 +158,7 @@ public class DeedPedestalScreen extends ContainerScreen<DeedPedestalContainer> {
 
         @Override
         public void onPress() {
+            DeedPedestalScreen.this.scrollOffset = 0;
             DeedPedestalScreen.this.setTab(this.tab);
         }
 
@@ -109,13 +171,53 @@ public class DeedPedestalScreen extends ContainerScreen<DeedPedestalContainer> {
 
             RenderSystem.enableDepthTest();
             blit(matrixStack, this.x, this.y, this.u, v, this.width, this.height, 256, 256);
-            if (this.isHovered())
-                this.renderToolTip(matrixStack, mouseX, mouseY);
         }
 
         @Override
         public void renderToolTip(MatrixStack matrixStack, int mouseX, int mouseY) {
             DeedPedestalScreen.this.renderTooltip(matrixStack, this.getMessage(), mouseX, mouseY);
+        }
+    }
+
+    private enum Tab {
+        PLAYERS(screen -> {
+            List<Widget> ret = new ArrayList<>();
+            DeedStorage.Claim claim = screen.container.tile.getClaim();
+            // add existing player settings
+            claim.playerSettings.values().forEach(s -> ret.addAll(createPlayerRow(screen, s)));
+            for (PlayerEntity player : screen.container.tile.getWorld().getPlayers()) {
+                // add player settings for new players
+                if (!claim.playerSettings.containsKey(player.getUniqueID()) && !claim.owner.equals(player.getUniqueID()))
+                    ret.addAll(createPlayerRow(screen, new DeedStorage.PlayerSettings(player)));
+            }
+            return ret;
+        }, 4),
+        BLOCKS(screen -> Collections.emptyList(), 1);
+
+        public final Function<DeedPedestalScreen, List<Widget>> init;
+        public final int widgetAmountX;
+
+        Tab(Function<DeedPedestalScreen, List<Widget>> init, int widgetAmountX) {
+            this.init = init;
+            this.widgetAmountX = widgetAmountX;
+        }
+
+        private static List<Widget> createPlayerRow(DeedPedestalScreen screen, DeedStorage.PlayerSettings settings) {
+            DeedStorage.Claim claim = screen.container.tile.getClaim();
+            return Arrays.asList(
+                    new TextWidget(0, 0, 148, 22, new StringTextComponent(settings.name)),
+                    new ProperToggleWidget(0, 0, 22, 22, 100, 167, 22, 0, TEXTURE, new TranslationTextComponent("info." + CraftableDeeds.ID + ".can_place_break"), settings.canPlaceBreak, v -> {
+                        settings.canPlaceBreak = v;
+                        PacketHandler.sendPlayerSettings(settings, claim);
+                    }),
+                    new ProperToggleWidget(0, 0, 22, 22, 100, 190, 22, 0, TEXTURE, new TranslationTextComponent("info." + CraftableDeeds.ID + ".loyal_mobs_attack"), settings.loyalMobsAttack, v -> {
+                        settings.loyalMobsAttack = v;
+                        PacketHandler.sendPlayerSettings(settings, claim);
+                    }),
+                    new ProperToggleWidget(0, 0, 22, 22, 100, 213, 22, 0, TEXTURE, new TranslationTextComponent("info." + CraftableDeeds.ID + ".can_open_containers"), settings.canOpenContainers, v -> {
+                        settings.canOpenContainers = v;
+                        PacketHandler.sendPlayerSettings(settings, claim);
+                    }));
         }
     }
 }

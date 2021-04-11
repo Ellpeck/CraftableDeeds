@@ -28,6 +28,7 @@ public final class PacketHandler {
         String version = "1";
         network = NetworkRegistry.newSimpleChannel(new ResourceLocation(CraftableDeeds.ID, "network"), () -> version, version::equals, version::equals);
         network.registerMessage(0, PacketDeeds.class, PacketDeeds::toBytes, PacketDeeds::fromBytes, PacketDeeds::onMessage);
+        network.registerMessage(1, PacketPlayerSettings.class, PacketPlayerSettings::toBytes, PacketPlayerSettings::fromBytes, PacketPlayerSettings::onMessage);
     }
 
     public static void sendDeeds(PlayerEntity player) {
@@ -38,6 +39,10 @@ public final class PacketHandler {
     public static void sendDeedsToEveryone(World world) {
         PacketDeeds packet = new PacketDeeds(DeedStorage.get(world).write(new CompoundNBT()));
         network.send(PacketDistributor.DIMENSION.with(world::getDimensionKey), packet);
+    }
+
+    public static void sendPlayerSettings(DeedStorage.PlayerSettings settings, DeedStorage.Claim claim) {
+        network.sendToServer(new PacketPlayerSettings(settings, claim.mapId));
     }
 
     public static void sendTileEntityToClients(TileEntity tile) {
@@ -65,13 +70,46 @@ public final class PacketHandler {
 
         // lambda causes classloading issues on a server here
         @SuppressWarnings("Convert2Lambda")
-        public static void onMessage(PacketDeeds message, Supplier<NetworkEvent.Context> ctx) {
+        public static void onMessage(PacketDeeds packet, Supplier<NetworkEvent.Context> ctx) {
             ctx.get().enqueueWork(new Runnable() {
                 @Override
                 public void run() {
                     Minecraft mc = Minecraft.getInstance();
                     if (mc.world != null)
-                        DeedStorage.get(mc.world).read(message.data);
+                        DeedStorage.get(mc.world).read(packet.data);
+                }
+            });
+            ctx.get().setPacketHandled(true);
+        }
+    }
+
+    private static class PacketPlayerSettings {
+
+        private final DeedStorage.PlayerSettings settings;
+        private final int claimId;
+
+        public PacketPlayerSettings(DeedStorage.PlayerSettings settings, int claimId) {
+            this.settings = settings;
+            this.claimId = claimId;
+        }
+
+        public static PacketPlayerSettings fromBytes(PacketBuffer buf) {
+            return new PacketPlayerSettings(new DeedStorage.PlayerSettings(buf.readCompoundTag()), buf.readVarInt());
+        }
+
+        public static void toBytes(PacketPlayerSettings packet, PacketBuffer buf) {
+            buf.writeCompoundTag(packet.settings.serializeNBT());
+            buf.writeVarInt(packet.claimId);
+        }
+
+        public static void onMessage(PacketPlayerSettings packet, Supplier<NetworkEvent.Context> ctx) {
+            ctx.get().enqueueWork(() -> {
+                PlayerEntity sender = ctx.get().getSender();
+                DeedStorage storage = DeedStorage.get(sender.world);
+                DeedStorage.Claim claim = storage.getClaim(packet.claimId);
+                if (claim != null && claim.owner.equals(sender.getUniqueID())) {
+                    claim.playerSettings.put(packet.settings.id, packet.settings);
+                    storage.markDirtyAndSend();
                 }
             });
             ctx.get().setPacketHandled(true);
