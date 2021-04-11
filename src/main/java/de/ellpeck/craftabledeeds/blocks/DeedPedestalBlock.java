@@ -30,7 +30,7 @@ public class DeedPedestalBlock extends ContainerBlock {
     private static final VoxelShape SHAPE = makeCuboidShape(0, 0, 0, 16, 12, 16);
 
     public DeedPedestalBlock() {
-        super(Properties.from(Blocks.STONE_BRICKS));
+        super(Properties.from(Blocks.STONE_BRICKS).hardnessAndResistance(5, 1200));
     }
 
     @Override
