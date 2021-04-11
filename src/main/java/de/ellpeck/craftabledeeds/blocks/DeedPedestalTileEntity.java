@@ -51,12 +51,11 @@ public class DeedPedestalTileEntity extends TileEntity implements ITickableTileE
         return null;
     }
 
-    public boolean canOpenSettings(PlayerEntity player) {
+    public DeedStorage.Claim getClaim() {
         int mapId = this.getMapId();
-        if (mapId < 0)
-            return false;
-        DeedStorage.Claim claim = DeedStorage.get(this.world).getClaim(mapId);
-        return claim.owner.equals(player.getUniqueID());
+        if (mapId >= 0)
+            return DeedStorage.get(this.world).getClaim(mapId);
+        return null;
     }
 
     @Override

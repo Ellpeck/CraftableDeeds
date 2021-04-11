@@ -40,12 +40,17 @@ public class EmptyDeedItem extends Item {
         }
 
         // if there is already a claim here, don't let us overwrite it
-        DeedStorage.Claim existing = DeedStorage.get(worldIn).getClaim(playerIn.getPosX(), 64, playerIn.getPosZ());
+        DeedStorage storage = DeedStorage.get(worldIn);
+        DeedStorage.Claim existing = storage.getClaim(playerIn.getPosX(), 64, playerIn.getPosZ());
         if (existing != null) {
-            if (!worldIn.isRemote) {
-                playerIn.sendStatusMessage(new TranslationTextComponent("info." + CraftableDeeds.ID + ".already_claimed", existing.getOwnerName()), true);
+            if (existing.cooldown <= 0 || !existing.owner.equals(playerIn.getUniqueID())) {
+                if (!worldIn.isRemote)
+                    playerIn.sendStatusMessage(new TranslationTextComponent("info." + CraftableDeeds.ID + ".already_claimed", existing.getOwnerName()), true);
+                return ActionResult.resultFail(held);
+            } else {
+                // if we're in cooldown mode and we're the owner, remove the cooldown deed and create a new one like usual
+                storage.removeClaim(existing.mapId);
             }
-            return ActionResult.resultFail(held);
         }
 
         if (!playerIn.abilities.isCreativeMode)

@@ -1,8 +1,8 @@
 package de.ellpeck.craftabledeeds;
 
+import net.minecraft.block.BlockState;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.item.HangingEntity;
-import net.minecraft.entity.item.ItemFrameEntity;
 import net.minecraft.entity.monster.CreeperEntity;
 import net.minecraft.entity.monster.EndermanEntity;
 import net.minecraft.entity.monster.ZombieEntity;
@@ -53,6 +53,11 @@ public final class Events {
     @SubscribeEvent
     public static void onBlockInteract(PlayerInteractEvent.RightClickBlock event) {
         if (shouldCancelInteraction(event.getPlayer(), event.getPos())) {
+            // always allow interacting with the pedestal!
+            BlockState state = event.getWorld().getBlockState(event.getPos());
+            if (state.getBlock() == CraftableDeeds.DEED_PEDESTAL_BLOCK.get())
+                return;
+
             if (!CraftableDeeds.allowOpeningBlocks.get())
                 event.setUseBlock(Event.Result.DENY);
             event.setUseItem(Event.Result.DENY);
@@ -74,12 +79,8 @@ public final class Events {
     @SubscribeEvent
     public static void onEntityAttack(AttackEntityEvent event) {
         Entity target = event.getTarget();
-        if (target instanceof HangingEntity && shouldCancelInteraction(event.getPlayer(), target.getPosition())) {
-            // allow punching items out of item frames!
-            if (target instanceof ItemFrameEntity && !((ItemFrameEntity) target).getDisplayedItem().isEmpty())
-                return;
+        if (target instanceof HangingEntity && shouldCancelInteraction(event.getPlayer(), target.getPosition()))
             event.setCanceled(true);
-        }
     }
 
     @SubscribeEvent
@@ -103,6 +104,6 @@ public final class Events {
             return false;
         DeedStorage storage = DeedStorage.get(entity.world);
         DeedStorage.Claim claim = storage.getClaim(pos.getX(), pos.getY(), pos.getZ());
-        return claim != null && (!CraftableDeeds.requirePedestals.get() || claim.pedestal != null) && !claim.owner.equals(entity.getUniqueID()) && !claim.friends.contains(entity.getUniqueID());
+        return claim != null && claim.isActive() && !claim.owner.equals(entity.getUniqueID()) && !claim.friends.contains(entity.getUniqueID());
     }
 }

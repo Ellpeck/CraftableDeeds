@@ -53,6 +53,7 @@ public class CraftableDeeds {
     public static ForgeConfigSpec.ConfigValue<Boolean> requirePedestals;
     public static ForgeConfigSpec.ConfigValue<Boolean> allowOpeningBlocks;
     public static ForgeConfigSpec.ConfigValue<List<? extends String>> allowedDimensions;
+    public static ForgeConfigSpec.ConfigValue<Integer> claimCooldown;
 
     public CraftableDeeds() {
         IEventBus bus = FMLJavaModLoadingContext.get().getModEventBus();
@@ -67,6 +68,7 @@ public class CraftableDeeds {
         requirePedestals = builder.comment("Whether the deed needs to be in a deed pedestal inside the claimed area for the claim to be valid").define("requirePedestals", true);
         allowOpeningBlocks = builder.comment("Whether opening blocks (like furnaces and chests) is allowed inside other players' claims").define("allowOpeningBlocks", false);
         allowedDimensions = builder.comment("The dimension ids of dimensions that using claims is allowed in. To allow all dimensions, add an entry \"*\"").defineList("allowedDimensions", Arrays.asList("minecraft:overworld", "minecraft:the_nether", "minecraft:the_end"), o -> true);
+        claimCooldown = builder.comment("The amount of hours that have to pass before a destroyed claim's area can be claimed by anyone but the previous owner again").define("claimCooldown", 12);
         ModLoadingContext.get().registerConfig(Type.COMMON, builder.build());
     }
 

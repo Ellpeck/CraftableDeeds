@@ -8,7 +8,6 @@ import net.minecraft.nbt.CompoundNBT;
 import net.minecraft.nbt.INBT;
 import net.minecraft.nbt.ListNBT;
 import net.minecraft.nbt.LongArrayNBT;
-import net.minecraft.tileentity.TileEntity;
 import net.minecraft.util.math.AxisAlignedBB;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.World;
@@ -57,10 +56,19 @@ public class DeedStorage extends WorldSavedData {
     }
 
     public void update() {
-        if (this.world.isRemote || this.world.getGameTime() % 40 != 0)
+        int interval = 40;
+        if (this.world.isRemote || this.world.getGameTime() % interval != 0)
             return;
-        // update the pedestal status of claims
         for (Claim claim : this.claims.values()) {
+            // update claim cooldown
+            if (claim.cooldown > 0) {
+                claim.cooldown -= interval;
+                if (claim.cooldown <= 0) {
+                    this.removeClaim(claim.mapId);
+                    continue;
+                }
+            }
+
             if (claim.pedestal != null) {
                 // check if the existing pedestal still contains our deed and skip if it does
                 DeedPedestalTileEntity existing = this.pedestals.get(claim.pedestal);
@@ -73,7 +81,7 @@ public class DeedStorage extends WorldSavedData {
                 this.markDirtyAndSend();
             }
 
-            // if it doesn't still contain our deed, check if there is any new pedestal
+            // if the pedestal doesn't still contain our deed, check if there is any new pedestal
             AxisAlignedBB area = claim.getArea();
             for (DeedPedestalTileEntity tile : this.pedestals.values()) {
                 BlockPos pos = tile.getPos();
@@ -125,14 +133,16 @@ public class DeedStorage extends WorldSavedData {
 
     public static class Claim implements INBTSerializable<CompoundNBT> {
 
-        private final World world;
         public final List<UUID> friends = new ArrayList<>();
         public int mapId;
         public UUID owner;
-        public int xCenter;
-        public int zCenter;
-        public int scale;
         public BlockPos pedestal;
+        public int cooldown;
+
+        private final World world;
+        private int xCenter;
+        private int zCenter;
+        private int scale;
 
         public Claim(World world, int mapId, UUID owner) {
             MapData data = world.getMapData(FilledMapItem.getMapName(mapId));
@@ -160,6 +170,12 @@ public class DeedStorage extends WorldSavedData {
         public Object getOwnerName() {
             PlayerEntity owner = this.world.getPlayerByUuid(this.owner);
             return owner != null ? owner.getDisplayName() : this.owner;
+        }
+
+        public boolean isActive() {
+            if (this.cooldown > 0)
+                return false;
+            return !CraftableDeeds.requirePedestals.get() || this.pedestal != null;
         }
 
         @Override

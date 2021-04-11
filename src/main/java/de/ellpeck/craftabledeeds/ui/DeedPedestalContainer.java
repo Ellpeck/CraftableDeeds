@@ -1,6 +1,7 @@
 package de.ellpeck.craftabledeeds.ui;
 
 import de.ellpeck.craftabledeeds.CraftableDeeds;
+import de.ellpeck.craftabledeeds.DeedStorage;
 import de.ellpeck.craftabledeeds.blocks.DeedPedestalTileEntity;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.inventory.container.Container;
@@ -17,6 +18,9 @@ public class DeedPedestalContainer extends Container {
 
     @Override
     public boolean canInteractWith(PlayerEntity playerIn) {
-        return !this.tile.isRemoved() && this.tile.canOpenSettings(playerIn);
+        if (this.tile.isRemoved())
+            return false;
+        DeedStorage.Claim claim = this.tile.getClaim();
+        return claim != null && claim.owner.equals(playerIn.getUniqueID());
     }
 }
