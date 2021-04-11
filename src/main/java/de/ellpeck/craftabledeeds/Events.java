@@ -1,5 +1,6 @@
 package de.ellpeck.craftabledeeds;
 
+import net.minecraft.block.Block;
 import net.minecraft.block.BlockState;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.item.HangingEntity;
@@ -18,6 +19,8 @@ import net.minecraftforge.event.world.BlockEvent;
 import net.minecraftforge.eventbus.api.Event;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
+
+import java.util.List;
 
 @Mod.EventBusSubscriber
 public final class Events {
@@ -40,8 +43,11 @@ public final class Events {
 
     @SubscribeEvent
     public static void onBlockBreak(BlockEvent.BreakEvent event) {
-        if (shouldCancelInteraction(event.getPlayer(), event.getPos()))
+        if (shouldCancelInteraction(event.getPlayer(), event.getPos())) {
+            if (isExempt(CraftableDeeds.breakableBlocks.get(), event.getState().getBlock()))
+                return;
             event.setCanceled(true);
+        }
     }
 
     @SubscribeEvent
@@ -53,9 +59,11 @@ public final class Events {
     @SubscribeEvent
     public static void onBlockInteract(PlayerInteractEvent.RightClickBlock event) {
         if (shouldCancelInteraction(event.getPlayer(), event.getPos())) {
-            // always allow interacting with the pedestal!
             BlockState state = event.getWorld().getBlockState(event.getPos());
+            // always allow interacting with the pedestal!
             if (state.getBlock() == CraftableDeeds.DEED_PEDESTAL_BLOCK.get())
+                return;
+            if (isExempt(CraftableDeeds.interactableBlocks.get(), state.getBlock()))
                 return;
 
             if (!CraftableDeeds.allowOpeningBlocks.get())
@@ -105,5 +113,13 @@ public final class Events {
         DeedStorage storage = DeedStorage.get(entity.world);
         DeedStorage.Claim claim = storage.getClaim(pos.getX(), pos.getY(), pos.getZ());
         return claim != null && claim.isActive() && !claim.owner.equals(entity.getUniqueID()) && !claim.friends.contains(entity.getUniqueID());
+    }
+
+    private static boolean isExempt(List<? extends String> config, Block block) {
+        return isExempt(config, block.getRegistryName().toString());
+    }
+
+    private static boolean isExempt(List<? extends String> config, String search) {
+        return config.stream().anyMatch(search::matches);
     }
 }

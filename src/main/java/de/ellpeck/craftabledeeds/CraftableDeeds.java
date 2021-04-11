@@ -30,6 +30,7 @@ import net.minecraftforge.registries.DeferredRegister;
 import net.minecraftforge.registries.ForgeRegistries;
 
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 
 @Mod(CraftableDeeds.ID)
@@ -54,6 +55,8 @@ public class CraftableDeeds {
     public static ForgeConfigSpec.ConfigValue<Boolean> allowOpeningBlocks;
     public static ForgeConfigSpec.ConfigValue<List<? extends String>> allowedDimensions;
     public static ForgeConfigSpec.ConfigValue<Integer> claimCooldown;
+    public static ForgeConfigSpec.ConfigValue<List<? extends String>> breakableBlocks;
+    public static ForgeConfigSpec.ConfigValue<List<? extends String>> interactableBlocks;
 
     public CraftableDeeds() {
         IEventBus bus = FMLJavaModLoadingContext.get().getModEventBus();
@@ -69,6 +72,8 @@ public class CraftableDeeds {
         allowOpeningBlocks = builder.comment("Whether opening blocks (like furnaces and chests) is allowed inside other players' claims").define("allowOpeningBlocks", false);
         allowedDimensions = builder.comment("The dimension ids of dimensions that using claims is allowed in. To allow all dimensions, add an entry \"*\"").defineList("allowedDimensions", Arrays.asList("minecraft:overworld", "minecraft:the_nether", "minecraft:the_end"), o -> true);
         claimCooldown = builder.comment("The amount of hours that have to pass before a destroyed claim's area can be claimed by anyone but the previous owner again").define("claimCooldown", 12);
+        breakableBlocks = builder.comment("The list of blocks that can be broken in an area even if it is claimed, supports regex").defineList("breakableBlocks", Collections.emptyList(), o -> true);
+        interactableBlocks = builder.comment("The list of blocks that can be interacted with in an area even if it is claimed, supports regex").defineList("interactableBlocks", Arrays.asList("minecraft:lever", ".*_door", ".*_fence_gate", ".*_button"), o -> true);
         ModLoadingContext.get().registerConfig(Type.COMMON, builder.build());
     }
 
