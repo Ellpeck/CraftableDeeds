@@ -49,7 +49,8 @@ public class EmptyDeedItem extends Item {
                 return ActionResult.resultFail(held);
             } else {
                 // if we're in cooldown mode and we're the owner, remove the cooldown deed and create a new one like usual
-                storage.removeClaim(existing.mapId);
+                if (!worldIn.isRemote)
+                    storage.removeClaim(existing.mapId);
             }
         }
 
