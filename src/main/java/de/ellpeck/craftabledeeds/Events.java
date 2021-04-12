@@ -168,6 +168,9 @@ public final class Events {
         DeedStorage.Claim claim = storage.getClaim(pos.getX(), pos.getY(), pos.getZ());
         if (claim == null || !claim.isActive())
             return false;
+        // the owner can do anything in their claim (obviously)
+        if (claim.owner.equals(entity.getUniqueID()))
+            return false;
         // allow players that are whitelisted in the pedestal settings
         if (relevantSetting != null && entity instanceof PlayerEntity) {
             if (!claim.playerSettings.containsKey(entity.getUniqueID())) {
@@ -178,7 +181,8 @@ public final class Events {
             if (settings != null && relevantSetting.apply(settings))
                 return false;
         }
-        return !claim.owner.equals(entity.getUniqueID());
+        // anything else should be disallowed
+        return true;
     }
 
     private static boolean isExemptConfig(List<? extends String> config, Block block) {
