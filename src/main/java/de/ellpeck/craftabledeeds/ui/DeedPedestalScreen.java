@@ -197,12 +197,12 @@ public class DeedPedestalScreen extends ContainerScreen<DeedPedestalContainer> {
             List<Widget> ret = new ArrayList<>();
             DeedStorage.Claim claim = screen.container.tile.getClaim();
             ret.add(new TextWidget(0, 0, 148, 22, Blocks.DISPENSER.getTranslatedName()));
-            ret.add(new ProperToggleWidget(0, 0, 22, 22, 100, 167, 22, 0, TEXTURE, new TranslationTextComponent("info." + CraftableDeeds.ID + ".can_edit_world"), claim.canDispensersPlace, v -> {
+            ret.add(new ProperToggleWidget(0, 0, 22, 22, 100, 167, 22, 0, TEXTURE, "info." + CraftableDeeds.ID + ".can_edit_world", claim.canDispensersPlace, v -> {
                 claim.canDispensersPlace = v;
                 PacketHandler.sendGeneralSettings(claim);
             }));
             ret.add(new TextWidget(0, 0, 148, 22, Blocks.PISTON.getTranslatedName()));
-            ret.add(new ProperToggleWidget(0, 0, 22, 22, 100, 167, 22, 0, TEXTURE, new TranslationTextComponent("info." + CraftableDeeds.ID + ".can_edit_world"), claim.canPistonsPush, v -> {
+            ret.add(new ProperToggleWidget(0, 0, 22, 22, 100, 167, 22, 0, TEXTURE, "info." + CraftableDeeds.ID + ".can_edit_world", claim.canPistonsPush, v -> {
                 claim.canPistonsPush = v;
                 PacketHandler.sendGeneralSettings(claim);
             }));
@@ -222,16 +222,16 @@ public class DeedPedestalScreen extends ContainerScreen<DeedPedestalContainer> {
             DeedStorage.Claim claim = screen.container.tile.getClaim();
             List<Widget> widgets = new ArrayList<>();
             widgets.add(new TextWidget(0, 0, 148, 22, new StringTextComponent(settings.name)));
-            widgets.add(new ProperToggleWidget(0, 0, 22, 22, 100, 167, 22, 0, TEXTURE, new TranslationTextComponent("info." + CraftableDeeds.ID + ".can_place_break"), settings.canPlaceBreak, v -> {
+            widgets.add(new ProperToggleWidget(0, 0, 22, 22, 100, 167, 22, 0, TEXTURE, "info." + CraftableDeeds.ID + ".can_place_break", settings.canPlaceBreak, v -> {
                 settings.canPlaceBreak = v;
                 PacketHandler.sendPlayerSettings(settings, claim);
             }));
             if (!settings.isFake) {
-                widgets.add(new ProperToggleWidget(0, 0, 22, 22, 100, 190, 22, 0, TEXTURE, new TranslationTextComponent("info." + CraftableDeeds.ID + ".loyal_mobs_attack"), settings.loyalMobsAttack, v -> {
+                widgets.add(new ProperToggleWidget(0, 0, 22, 22, 100, 190, 22, 0, TEXTURE, "info." + CraftableDeeds.ID + ".loyal_mobs_attack", settings.loyalMobsAttack, v -> {
                     settings.loyalMobsAttack = v;
                     PacketHandler.sendPlayerSettings(settings, claim);
                 }));
-                widgets.add(new ProperToggleWidget(0, 0, 22, 22, 100, 213, 22, 0, TEXTURE, new TranslationTextComponent("info." + CraftableDeeds.ID + ".can_open_containers"), settings.canOpenContainers, v -> {
+                widgets.add(new ProperToggleWidget(0, 0, 22, 22, 100, 213, 22, 0, TEXTURE, "info." + CraftableDeeds.ID + ".can_open_containers", settings.canOpenContainers, v -> {
                     settings.canOpenContainers = v;
                     PacketHandler.sendPlayerSettings(settings, claim);
                 }));
