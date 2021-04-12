@@ -47,13 +47,16 @@ public final class Events {
                 PacketHandler.sendDeeds((PlayerEntity) entity);
             } else if (entity instanceof IronGolemEntity || entity instanceof SnowGolemEntity || entity instanceof WolfEntity) {
                 MobEntity mob = ((MobEntity) entity);
-                // hack that allows iron golems to attack players
-                if (mob instanceof IronGolemEntity)
-                    ((IronGolemEntity) mob).setPlayerCreated(false);
                 mob.targetSelector.addGoal(3, new NearestAttackableTargetGoal<>(mob, PlayerEntity.class, 10, false, false, p -> {
                     if (mob instanceof TameableEntity && !((TameableEntity) mob).isTamed())
                         return false;
-                    return isDisallowedHere(p, p.getPosition(), s -> !s.loyalMobsAttack);
+                    if (isDisallowedHere(p, p.getPosition(), s -> !s.loyalMobsAttack)) {
+                        // hack that allows iron golems to attack players, bleh
+                        if (mob instanceof IronGolemEntity)
+                            ((IronGolemEntity) mob).setPlayerCreated(false);
+                        return true;
+                    }
+                    return false;
                 }));
             }
         }
