@@ -14,6 +14,7 @@ import net.minecraft.world.server.ServerWorld;
 import net.minecraft.world.storage.MapData;
 import net.minecraft.world.storage.WorldSavedData;
 import net.minecraftforge.common.util.Constants;
+import net.minecraftforge.common.util.FakePlayer;
 import net.minecraftforge.common.util.INBTSerializable;
 
 import java.util.HashMap;
@@ -139,6 +140,8 @@ public class DeedStorage extends WorldSavedData {
         public UUID owner;
         public BlockPos pedestal;
         public int cooldown;
+        public boolean canDispensersPlace = true;
+        public boolean canPistonsPush = true;
 
         private final World world;
         private int xCenter;
@@ -187,6 +190,9 @@ public class DeedStorage extends WorldSavedData {
             nbt.putInt("xCenter", this.xCenter);
             nbt.putInt("zCenter", this.zCenter);
             nbt.putInt("scale", this.scale);
+            nbt.putInt("cooldown", this.cooldown);
+            nbt.putBoolean("canDispensersPlace", this.canDispensersPlace);
+            nbt.putBoolean("canPistonsPush", this.canPistonsPush);
             if (this.pedestal != null)
                 nbt.putLong("pedestal", this.pedestal.toLong());
             ListNBT playerSettings = new ListNBT();
@@ -203,6 +209,9 @@ public class DeedStorage extends WorldSavedData {
             this.xCenter = nbt.getInt("xCenter");
             this.zCenter = nbt.getInt("zCenter");
             this.scale = nbt.getInt("scale");
+            this.cooldown = nbt.getInt("cooldown");
+            this.canDispensersPlace = nbt.getBoolean("canDispensersPlace");
+            this.canPistonsPush = nbt.getBoolean("canPistonsPush");
             this.pedestal = nbt.contains("pedestal") ? BlockPos.fromLong(nbt.getLong("pedestal")) : null;
             this.playerSettings.clear();
             for (INBT inbt : nbt.getList("playerSettings", Constants.NBT.TAG_COMPOUND)) {
@@ -216,13 +225,15 @@ public class DeedStorage extends WorldSavedData {
 
         public UUID id;
         public String name;
+        public boolean isFake;
         public boolean canPlaceBreak;
         public boolean loyalMobsAttack;
-        public boolean canOpenContainers = true;
+        public boolean canOpenContainers;
 
         public PlayerSettings(PlayerEntity player) {
             this.id = player.getUniqueID();
             this.name = player.getDisplayName().getString();
+            this.isFake = player instanceof FakePlayer;
         }
 
         public PlayerSettings(CompoundNBT nbt) {
@@ -234,6 +245,7 @@ public class DeedStorage extends WorldSavedData {
             CompoundNBT nbt = new CompoundNBT();
             nbt.putUniqueId("id", this.id);
             nbt.putString("name", this.name);
+            nbt.putBoolean("isFake", this.isFake);
             nbt.putBoolean("canPlaceBreak", this.canPlaceBreak);
             nbt.putBoolean("loyalMobsAttack", this.loyalMobsAttack);
             nbt.putBoolean("canOpenContainers", this.canOpenContainers);
@@ -244,6 +256,7 @@ public class DeedStorage extends WorldSavedData {
         public void deserializeNBT(CompoundNBT nbt) {
             this.id = nbt.getUniqueId("id");
             this.name = nbt.getString("name");
+            this.isFake = nbt.getBoolean("isFake");
             this.canPlaceBreak = nbt.getBoolean("canPlaceBreak");
             this.loyalMobsAttack = nbt.getBoolean("loyalMobsAttack");
             this.canOpenContainers = nbt.getBoolean("canOpenContainers");

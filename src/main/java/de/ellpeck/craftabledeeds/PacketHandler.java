@@ -29,6 +29,7 @@ public final class PacketHandler {
         network = NetworkRegistry.newSimpleChannel(new ResourceLocation(CraftableDeeds.ID, "network"), () -> version, version::equals, version::equals);
         network.registerMessage(0, PacketDeeds.class, PacketDeeds::toBytes, PacketDeeds::fromBytes, PacketDeeds::onMessage);
         network.registerMessage(1, PacketPlayerSettings.class, PacketPlayerSettings::toBytes, PacketPlayerSettings::fromBytes, PacketPlayerSettings::onMessage);
+        network.registerMessage(2, PacketGeneralSettings.class, PacketGeneralSettings::toBytes, PacketGeneralSettings::fromBytes, PacketGeneralSettings::onMessage);
     }
 
     public static void sendDeeds(PlayerEntity player) {
@@ -43,6 +44,10 @@ public final class PacketHandler {
 
     public static void sendPlayerSettings(DeedStorage.PlayerSettings settings, DeedStorage.Claim claim) {
         network.sendToServer(new PacketPlayerSettings(settings, claim.mapId));
+    }
+
+    public static void sendGeneralSettings(DeedStorage.Claim claim) {
+        network.sendToServer(new PacketGeneralSettings(claim.canDispensersPlace, claim.canPistonsPush, claim.mapId));
     }
 
     public static void sendTileEntityToClients(TileEntity tile) {
@@ -109,6 +114,43 @@ public final class PacketHandler {
                 DeedStorage.Claim claim = storage.getClaim(packet.claimId);
                 if (claim != null && claim.owner.equals(sender.getUniqueID())) {
                     claim.playerSettings.put(packet.settings.id, packet.settings);
+                    storage.markDirtyAndSend();
+                }
+            });
+            ctx.get().setPacketHandled(true);
+        }
+    }
+
+    private static class PacketGeneralSettings {
+
+        private final int claimId;
+        private final boolean canDispensersPlace;
+        private final boolean canPistonsPush;
+
+        public PacketGeneralSettings(boolean canDispensersPlace, boolean canPistonsPush, int claimId) {
+            this.canDispensersPlace = canDispensersPlace;
+            this.canPistonsPush = canPistonsPush;
+            this.claimId = claimId;
+        }
+
+        public static PacketGeneralSettings fromBytes(PacketBuffer buf) {
+            return new PacketGeneralSettings(buf.readBoolean(), buf.readBoolean(), buf.readVarInt());
+        }
+
+        public static void toBytes(PacketGeneralSettings packet, PacketBuffer buf) {
+            buf.writeBoolean(packet.canDispensersPlace);
+            buf.writeBoolean(packet.canPistonsPush);
+            buf.writeVarInt(packet.claimId);
+        }
+
+        public static void onMessage(PacketGeneralSettings packet, Supplier<NetworkEvent.Context> ctx) {
+            ctx.get().enqueueWork(() -> {
+                PlayerEntity sender = ctx.get().getSender();
+                DeedStorage storage = DeedStorage.get(sender.world);
+                DeedStorage.Claim claim = storage.getClaim(packet.claimId);
+                if (claim != null && claim.owner.equals(sender.getUniqueID())) {
+                    claim.canDispensersPlace = packet.canDispensersPlace;
+                    claim.canPistonsPush = packet.canPistonsPush;
                     storage.markDirtyAndSend();
                 }
             });

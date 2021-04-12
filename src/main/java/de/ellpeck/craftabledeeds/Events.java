@@ -19,6 +19,7 @@ import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.entity.projectile.WitherSkullEntity;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.Explosion;
+import net.minecraft.world.World;
 import net.minecraftforge.event.RegisterCommandsEvent;
 import net.minecraftforge.event.TickEvent;
 import net.minecraftforge.event.entity.EntityJoinWorldEvent;
@@ -27,6 +28,7 @@ import net.minecraftforge.event.entity.player.AttackEntityEvent;
 import net.minecraftforge.event.entity.player.PlayerInteractEvent;
 import net.minecraftforge.event.world.BlockEvent;
 import net.minecraftforge.event.world.ExplosionEvent;
+import net.minecraftforge.event.world.PistonEvent;
 import net.minecraftforge.eventbus.api.Event;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
@@ -125,7 +127,7 @@ public final class Events {
     }
 
     @SubscribeEvent
-    public static void doExplosion(ExplosionEvent.Start event) {
+    public static void onExplosion(ExplosionEvent.Start event) {
         Explosion explosion = event.getExplosion();
         Entity exploder = explosion.getExploder();
         if (exploder != null && isDisallowedHere(exploder, new BlockPos(explosion.getPosition()), null)) {
@@ -137,6 +139,16 @@ public final class Events {
                 return;
 
             event.setCanceled(true);
+        }
+    }
+
+    @SubscribeEvent
+    public static void onPiston(PistonEvent.Pre event) {
+        if (event.getWorld() instanceof World) {
+            DeedStorage storage = DeedStorage.get((World) event.getWorld());
+            DeedStorage.Claim claim = storage.getClaim(event.getPos().getX(), event.getPos().getY(), event.getPos().getZ());
+            if (claim != null && claim.isActive() && !claim.canPistonsPush)
+                event.setCanceled(true);
         }
     }
 
@@ -154,9 +166,12 @@ public final class Events {
         if (claim == null || !claim.isActive())
             return false;
         // allow players that are whitelisted in the pedestal settings
-        if (relevantSetting != null) {
-            DeedStorage.PlayerSettings settings = claim.playerSettings.computeIfAbsent(entity.getUniqueID(),
-                    u -> entity instanceof PlayerEntity ? new DeedStorage.PlayerSettings((PlayerEntity) entity) : null);
+        if (relevantSetting != null && entity instanceof PlayerEntity) {
+            if (!claim.playerSettings.containsKey(entity.getUniqueID())) {
+                claim.playerSettings.put(entity.getUniqueID(), new DeedStorage.PlayerSettings((PlayerEntity) entity));
+                storage.markDirtyAndSend();
+            }
+            DeedStorage.PlayerSettings settings = claim.playerSettings.get(entity.getUniqueID());
             if (settings != null && relevantSetting.apply(settings))
                 return false;
         }

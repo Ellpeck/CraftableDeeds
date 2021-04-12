@@ -34,6 +34,7 @@ minecraft {
 
             // Recommended logging level for the console
             property 'forge.logging.console.level', 'info'
+            property 'mixin.env.disableRefMap', 'true'
 
             mods {
                 craftabledeeds {
@@ -50,6 +51,7 @@ minecraft {
 
             // Recommended logging level for the console
             property 'forge.logging.console.level', 'info'
+            property 'mixin.env.disableRefMap', 'true'
 
             mods {
                 craftabledeeds {
@@ -63,6 +65,7 @@ minecraft {
 
             // Recommended logging data for a userdev environment
             property 'forge.logging.markers', 'SCAN,REGISTRIES,REGISTRYDUMP'
+            property 'mixin.env.disableRefMap', 'true'
 
             // Recommended logging level for the console
             property 'forge.logging.console.level', 'info'
@@ -83,11 +86,20 @@ sourceSets.main.resources {
 }
 
 repositories {
-    
+    maven {
+        url = "https://maven.ellpeck.de"
+    }
+    maven {
+        url = "https://maven.blamejared.com"
+    }
 }
 
 dependencies {
     minecraft 'net.minecraftforge:forge:1.16.5-36.1.0'
+
+    // for testing fake players
+    runtimeOnly fg.deobf("de.ellpeck.naturesaura:NaturesAura:34.2.66")
+    runtimeOnly fg.deobf("vazkii.patchouli:Patchouli:1.16.4-50")
 }
 
 // Example for how to get properties into the manifest for reading by the runtime..
