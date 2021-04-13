@@ -45,7 +45,7 @@ public final class Events {
         if (!entity.world.isRemote) {
             if (entity instanceof PlayerEntity) {
                 PacketHandler.sendDeeds((PlayerEntity) entity);
-            } else if (entity instanceof IronGolemEntity || entity instanceof SnowGolemEntity || entity instanceof WolfEntity) {
+            } else if (entity instanceof IronGolemEntity || entity instanceof SnowGolemEntity || entity instanceof WolfEntity || CraftableDeeds.additionalLoyalMobs.get().contains(entity.getType().getRegistryName().toString())) {
                 MobEntity mob = ((MobEntity) entity);
                 mob.targetSelector.addGoal(3, new NearestAttackableTargetGoal<>(mob, PlayerEntity.class, 10, false, false, p -> {
                     if (mob instanceof TameableEntity && !((TameableEntity) mob).isTamed())

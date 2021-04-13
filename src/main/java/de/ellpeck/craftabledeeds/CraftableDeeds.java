@@ -61,6 +61,7 @@ public class CraftableDeeds {
     public static ForgeConfigSpec.ConfigValue<Boolean> allowCreeperExplosions;
     public static ForgeConfigSpec.ConfigValue<Boolean> allowWitherExplosions;
     public static ForgeConfigSpec.ConfigValue<Integer> deedBypassPermissionLevel;
+    public static ForgeConfigSpec.ConfigValue<List<? extends String>> additionalLoyalMobs;
 
     public CraftableDeeds() {
         IEventBus bus = FMLJavaModLoadingContext.get().getModEventBus();
@@ -79,6 +80,7 @@ public class CraftableDeeds {
         breakableBlocks = builder.comment("The list of blocks that can be broken in an area even if it is claimed, supports regex").defineList("breakableBlocks", Collections.emptyList(), o -> true);
         interactableBlocks = builder.comment("The list of blocks that can be interacted with in an area even if it is claimed, supports regex").defineList("interactableBlocks", Arrays.asList("minecraft:lever", ".*_door", ".*_fence_gate", ".*_button"), o -> true);
         deedBypassPermissionLevel = builder.comment("The permission level required to bypass deed restrictions").define("deedBypassPermissionLevel", 2);
+        additionalLoyalMobs = builder.comment("The registry names of additional mobs that should be considered loyal and attack players in a claim. Note that, if a mob is tameable, it only attacks if tamed").defineList("additionalLoyalMobs", Collections.emptyList(), o -> true);
         builder.push("explosions");
         allowTntExplosions = builder.comment("Whether TNT explosions are allowed in claimed areas").define("tnt", true);
         allowCreeperExplosions = builder.comment("Whether creeper explosions are allowed in claimed areas").define("creepers", false);
