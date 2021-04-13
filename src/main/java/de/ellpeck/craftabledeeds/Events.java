@@ -123,7 +123,7 @@ public final class Events {
     public static void onMobGriefing(EntityMobGriefingEvent event) {
         Entity entity = event.getEntity();
         // endermen picking stuff up and zombies breaking down doors should be disallowed
-        if (entity instanceof EndermanEntity || entity instanceof ZombieEntity) {
+        if (entity instanceof EndermanEntity || entity instanceof ZombieEntity || entity instanceof CreeperEntity && !CraftableDeeds.allowCreeperExplosions.get()) {
             if (isDisallowedHere(entity, entity.getPosition(), null))
                 event.setResult(Event.Result.DENY);
         }
@@ -134,7 +134,8 @@ public final class Events {
         Explosion explosion = event.getExplosion();
         Entity exploder = explosion.getExploder();
         if (exploder != null && isDisallowedHere(exploder, new BlockPos(explosion.getPosition()), null)) {
-            if (exploder instanceof CreeperEntity && CraftableDeeds.allowCreeperExplosions.get())
+            // creepers are handled in onMobGriefing
+            if (exploder instanceof CreeperEntity)
                 return;
             if (exploder instanceof TNTEntity && CraftableDeeds.allowTntExplosions.get())
                 return;
