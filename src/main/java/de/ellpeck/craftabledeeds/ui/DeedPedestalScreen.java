@@ -90,7 +90,7 @@ public class DeedPedestalScreen extends ContainerScreen<DeedPedestalContainer> {
 
     @Override
     public boolean mouseDragged(double mouseX, double mouseY, int i, double j, double k) {
-        if (this.isScrolling) {
+        if (this.isScrolling && this.widgetAmountY > MAX_WIDGET_AMT_Y) {
             float percentage = MathHelper.clamp(((float) mouseY - (this.guiTop + 19)) / (120 - 15), 0, 1);
             int offset = (int) (percentage * (float) (this.widgetAmountY - MAX_WIDGET_AMT_Y));
             if (offset != this.scrollOffset) {
