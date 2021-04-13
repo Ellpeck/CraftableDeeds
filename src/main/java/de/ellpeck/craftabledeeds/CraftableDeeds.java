@@ -60,6 +60,7 @@ public class CraftableDeeds {
     public static ForgeConfigSpec.ConfigValue<Boolean> allowTntExplosions;
     public static ForgeConfigSpec.ConfigValue<Boolean> allowCreeperExplosions;
     public static ForgeConfigSpec.ConfigValue<Boolean> allowWitherExplosions;
+    public static ForgeConfigSpec.ConfigValue<Integer> deedBypassPermissionLevel;
 
     public CraftableDeeds() {
         IEventBus bus = FMLJavaModLoadingContext.get().getModEventBus();
@@ -77,6 +78,7 @@ public class CraftableDeeds {
         claimCooldown = builder.comment("The amount of hours that have to pass before a destroyed claim's area can be claimed by anyone but the previous owner again").define("claimCooldown", 12);
         breakableBlocks = builder.comment("The list of blocks that can be broken in an area even if it is claimed, supports regex").defineList("breakableBlocks", Collections.emptyList(), o -> true);
         interactableBlocks = builder.comment("The list of blocks that can be interacted with in an area even if it is claimed, supports regex").defineList("interactableBlocks", Arrays.asList("minecraft:lever", ".*_door", ".*_fence_gate", ".*_button"), o -> true);
+        deedBypassPermissionLevel = builder.comment("The permission level required to bypass deed restrictions").define("deedBypassPermissionLevel", 2);
         builder.push("explosions");
         allowTntExplosions = builder.comment("Whether TNT explosions are allowed in claimed areas").define("tnt", true);
         allowCreeperExplosions = builder.comment("Whether creeper explosions are allowed in claimed areas").define("creepers", false);

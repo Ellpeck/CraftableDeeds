@@ -162,7 +162,7 @@ public final class Events {
 
     private static boolean isDisallowedHere(Entity entity, BlockPos pos, Function<DeedStorage.PlayerSettings, Boolean> relevantSetting) {
         // opped players should be ignored
-        if (entity.hasPermissionLevel(2))
+        if (entity.hasPermissionLevel(CraftableDeeds.deedBypassPermissionLevel.get()))
             return false;
         DeedStorage storage = DeedStorage.get(entity.world);
         DeedStorage.Claim claim = storage.getClaim(pos.getX(), pos.getY(), pos.getZ());
