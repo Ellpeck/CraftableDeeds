@@ -8,6 +8,7 @@ import de.ellpeck.craftabledeeds.PacketHandler;
 import net.minecraft.block.Blocks;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.screen.inventory.ContainerScreen;
+import net.minecraft.client.gui.widget.ToggleWidget;
 import net.minecraft.client.gui.widget.Widget;
 import net.minecraft.client.gui.widget.button.AbstractButton;
 import net.minecraft.entity.player.PlayerEntity;
@@ -183,30 +184,57 @@ public class DeedPedestalScreen extends ContainerScreen<DeedPedestalContainer> {
     private enum Tab {
         PLAYERS(screen -> {
             List<Widget> ret = new ArrayList<>();
+            List<ProperToggleWidget> allPlaceBreak = new ArrayList<>();
+            List<ProperToggleWidget> allLoyalAttack = new ArrayList<>();
+            List<ProperToggleWidget> allContainers = new ArrayList<>();
             DeedStorage.Claim claim = screen.container.tile.getClaim();
             // add existing player settings
-            claim.playerSettings.values().stream().filter(s -> !s.isFake).forEach(s -> ret.addAll(createPlayerRow(screen, s)));
+            claim.playerSettings.values().stream().filter(s -> !s.isFake).forEach(s -> ret.addAll(createPlayerRow(screen, s, allPlaceBreak, allLoyalAttack, allContainers)));
             for (PlayerEntity player : screen.container.tile.getWorld().getPlayers()) {
                 // add player settings for new players
                 if (!claim.playerSettings.containsKey(player.getUniqueID()) && !claim.owner.equals(player.getUniqueID()))
-                    ret.addAll(createPlayerRow(screen, new DeedStorage.PlayerSettings(player)));
+                    ret.addAll(createPlayerRow(screen, new DeedStorage.PlayerSettings(player), allPlaceBreak, allLoyalAttack, allContainers));
+            }
+
+            // "toggle all" entry
+            if (ret.size() > 0) {
+                ret.add(0, new TextWidget(0, 0, 148, 22, new TranslationTextComponent("info." + CraftableDeeds.ID + ".set_all")));
+                ret.add(1, new ProperToggleWidget(0, 0, 22, 22, 100, 167, 22, 0, TEXTURE, "info." + CraftableDeeds.ID + ".can_place_break",
+                        allPlaceBreak.stream().allMatch(ToggleWidget::isStateTriggered),
+                        v -> allPlaceBreak.forEach(w -> w.setStateTriggered(v))));
+                ret.add(2, new ProperToggleWidget(0, 0, 22, 22, 100, 190, 22, 0, TEXTURE, "info." + CraftableDeeds.ID + ".loyal_mobs_attack",
+                        allLoyalAttack.stream().allMatch(ToggleWidget::isStateTriggered),
+                        v -> allLoyalAttack.forEach(w -> w.setStateTriggered(v))));
+                ret.add(3, new ProperToggleWidget(0, 0, 22, 22, 100, 213, 22, 0, TEXTURE, "info." + CraftableDeeds.ID + ".can_open_containers",
+                        allContainers.stream().allMatch(ToggleWidget::isStateTriggered),
+                        v -> allContainers.forEach(w -> w.setStateTriggered(v))));
             }
             return ret;
         }, 4),
         BLOCKS(screen -> {
             List<Widget> ret = new ArrayList<>();
+            List<ProperToggleWidget> allPlaceBreak = new ArrayList<>();
             DeedStorage.Claim claim = screen.container.tile.getClaim();
             ret.add(new TextWidget(0, 0, 148, 22, Blocks.DISPENSER.getTranslatedName()));
-            ret.add(new ProperToggleWidget(0, 0, 22, 22, 100, 167, 22, 0, TEXTURE, "info." + CraftableDeeds.ID + ".can_edit_world", claim.canDispensersPlace, v -> {
+            ProperToggleWidget w;
+            ret.add(w = new ProperToggleWidget(0, 0, 22, 22, 100, 167, 22, 0, TEXTURE, "info." + CraftableDeeds.ID + ".can_edit_world", claim.canDispensersPlace, v -> {
                 claim.canDispensersPlace = v;
                 PacketHandler.sendGeneralSettings(claim);
             }));
+            allPlaceBreak.add(w);
             ret.add(new TextWidget(0, 0, 148, 22, Blocks.PISTON.getTranslatedName()));
-            ret.add(new ProperToggleWidget(0, 0, 22, 22, 100, 167, 22, 0, TEXTURE, "info." + CraftableDeeds.ID + ".can_edit_world", claim.canPistonsPush, v -> {
+            ret.add(w = new ProperToggleWidget(0, 0, 22, 22, 100, 167, 22, 0, TEXTURE, "info." + CraftableDeeds.ID + ".can_edit_world", claim.canPistonsPush, v -> {
                 claim.canPistonsPush = v;
                 PacketHandler.sendGeneralSettings(claim);
             }));
-            claim.playerSettings.values().stream().filter(s -> s.isFake).forEach(s -> ret.addAll(createPlayerRow(screen, s)));
+            allPlaceBreak.add(w);
+            claim.playerSettings.values().stream().filter(s -> s.isFake).forEach(s -> ret.addAll(createPlayerRow(screen, s, allPlaceBreak, null, null)));
+
+            // "toggle all" entry
+            ret.add(0, new TextWidget(0, 0, 148, 22, new TranslationTextComponent("info." + CraftableDeeds.ID + ".set_all")));
+            ret.add(1, new ProperToggleWidget(0, 0, 22, 22, 100, 167, 22, 0, TEXTURE, "info." + CraftableDeeds.ID + ".can_edit_world",
+                    allPlaceBreak.stream().allMatch(ToggleWidget::isStateTriggered),
+                    v -> allPlaceBreak.forEach(x -> x.setStateTriggered(v))));
             return ret;
         }, 2);
 
@@ -218,23 +246,29 @@ public class DeedPedestalScreen extends ContainerScreen<DeedPedestalContainer> {
             this.widgetAmountX = widgetAmountX;
         }
 
-        private static List<Widget> createPlayerRow(DeedPedestalScreen screen, DeedStorage.PlayerSettings settings) {
+        private static List<Widget> createPlayerRow(DeedPedestalScreen screen, DeedStorage.PlayerSettings settings, List<ProperToggleWidget> allPlaceBreak, List<ProperToggleWidget> allLoyalAttack, List<ProperToggleWidget> allContainers) {
             DeedStorage.Claim claim = screen.container.tile.getClaim();
             List<Widget> widgets = new ArrayList<>();
             widgets.add(new TextWidget(0, 0, 148, 22, new StringTextComponent(settings.name)));
-            widgets.add(new ProperToggleWidget(0, 0, 22, 22, 100, 167, 22, 0, TEXTURE, "info." + CraftableDeeds.ID + ".can_place_break", settings.canPlaceBreak, v -> {
+            ProperToggleWidget w;
+            widgets.add(w = new ProperToggleWidget(0, 0, 22, 22, 100, 167, 22, 0, TEXTURE, "info." + CraftableDeeds.ID + ".can_place_break", settings.canPlaceBreak, v -> {
                 settings.canPlaceBreak = v;
                 PacketHandler.sendPlayerSettings(settings, claim);
             }));
+            allPlaceBreak.add(w);
             if (!settings.isFake) {
-                widgets.add(new ProperToggleWidget(0, 0, 22, 22, 100, 190, 22, 0, TEXTURE, "info." + CraftableDeeds.ID + ".loyal_mobs_attack", settings.loyalMobsAttack, v -> {
+                widgets.add(w = new ProperToggleWidget(0, 0, 22, 22, 100, 190, 22, 0, TEXTURE, "info." + CraftableDeeds.ID + ".loyal_mobs_attack", settings.loyalMobsAttack, v -> {
                     settings.loyalMobsAttack = v;
                     PacketHandler.sendPlayerSettings(settings, claim);
                 }));
-                widgets.add(new ProperToggleWidget(0, 0, 22, 22, 100, 213, 22, 0, TEXTURE, "info." + CraftableDeeds.ID + ".can_open_containers", settings.canOpenContainers, v -> {
+                if (allLoyalAttack != null)
+                    allLoyalAttack.add(w);
+                widgets.add(w = new ProperToggleWidget(0, 0, 22, 22, 100, 213, 22, 0, TEXTURE, "info." + CraftableDeeds.ID + ".can_open_containers", settings.canOpenContainers, v -> {
                     settings.canOpenContainers = v;
                     PacketHandler.sendPlayerSettings(settings, claim);
                 }));
+                if (allContainers != null)
+                    allContainers.add(w);
             }
             return widgets;
         }

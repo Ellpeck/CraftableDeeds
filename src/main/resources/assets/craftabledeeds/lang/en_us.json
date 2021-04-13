@@ -17,6 +17,7 @@
     "info.craftabledeeds.can_open_containers_false": "Cannot Open Containers",
     "info.craftabledeeds.can_edit_world_true": "Can Edit World",
     "info.craftabledeeds.can_edit_world_false": "Cannot Edit World",
+    "info.craftabledeeds.set_all": "All Entries",
     "container.craftabledeeds.deed_pedestal": "Deed Pedestal",
     "tab.craftabledeeds.players": "Players",
     "tab.craftabledeeds.blocks": "Blocks"

@@ -27,7 +27,12 @@ public class ProperToggleWidget extends ToggleWidget {
 
     @Override
     public void onClick(double mouseX, double mouseY) {
-        this.stateTriggered = !this.stateTriggered;
+        this.setStateTriggered(!this.stateTriggered);
+    }
+
+    @Override
+    public void setStateTriggered(boolean triggered) {
+        super.setStateTriggered(triggered);
         this.onToggled.accept(this.stateTriggered);
         this.setMessage(new TranslationTextComponent(this.tooltipKey + "_" + this.stateTriggered));
     }
