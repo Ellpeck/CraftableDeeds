@@ -100,8 +100,10 @@ public class DeedStorage extends WorldSavedData {
     }
 
     public void markDirtyAndSend() {
-        PacketHandler.sendDeedsToEveryone(this.world);
-        this.markDirty();
+        if (!this.world.isRemote) {
+            PacketHandler.sendDeedsToEveryone(this.world);
+            this.markDirty();
+        }
     }
 
     @Override
