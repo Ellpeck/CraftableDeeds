@@ -16,7 +16,7 @@ apply plugin: 'org.spongepowered.mixin'
 apply plugin: 'eclipse'
 apply plugin: 'maven-publish'
 
-version = '2.0'
+version = '2.1'
 group = 'de.ellpeck.craftabledeeds' // http://maven.apache.org/guides/mini/guide-naming-conventions.html
 archivesBaseName = 'CraftableDeeds'
 
