@@ -108,14 +108,14 @@ public final class Events {
 
     @SubscribeEvent
     public static void onEntityInteract(PlayerInteractEvent.EntityInteract event) {
-        if (isDisallowedHere(event.getPlayer(), event.getPos(), null))
+        if (isDisallowedHere(event.getPlayer(), event.getPos(), s -> s.canOpenContainers))
             event.setCanceled(true);
     }
 
     @SubscribeEvent
     public static void onEntityAttack(AttackEntityEvent event) {
         Entity target = event.getTarget();
-        if (target instanceof HangingEntity && isDisallowedHere(event.getPlayer(), target.getPosition(), null))
+        if (target instanceof HangingEntity && isDisallowedHere(event.getPlayer(), target.getPosition(), s -> s.canPlaceBreak))
             event.setCanceled(true);
     }
 
